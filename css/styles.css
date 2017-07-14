@@ -154,6 +154,7 @@ a {
 }
 
 .container-wrap {
+	margin-bottom: 45px;
 	display: inline-block;
     width: 100%;
 

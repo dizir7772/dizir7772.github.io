@@ -1,35 +1,1791 @@
 <!DOCTYPE html>
-<html>
+<html lang="uk">
 <head>
-    <title>Viacheslav Artemenko</title>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="author" content="">
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="stylesheet" href="css/kube.min.css" />
-<!--    <link rel="stylesheet" href="css/font-awesome.min.css" />-->
-    <link rel="stylesheet" href="css/custom.min.css" />
-<!--	<link rel="stylesheet" href="css/v5-font-face.min.css" />-->
-    <link rel="shortcut icon" href="img/favicon.png" />
-	<link href='http://fonts.googleapis.com/css?family=Playfair+Display+SC:700' rel='stylesheet' type='text/css'>
-	<link href='http://fonts.googleapis.com/css?family=Lato:400,700' rel='stylesheet' type='text/css'>
-	<style>
-		.intro h1:before {
-			/* Edit this with your name or anything else */
-			content: 'dizir';
-		}
-	</style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Вуглеводний калькулятор інсуліну</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0A0D12">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Калькулятор">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0A0D12;
+    --surface:#12161F;
+    --surface-2:#171C26;
+    --border:#1E2530;
+    --text:#E8EAED;
+    --text-muted:#8791A1;
+    --text-faint:#4B5563;
+    --carb:#E8A94D;
+    --carb-glow:rgba(232,169,77,.35);
+    --dose:#2DD4BF;
+    --dose-glow:rgba(45,212,191,.4);
+    --danger:#E8546B;
+    --good:#4ADE80;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1200px 600px at 15% -10%, rgba(45,212,191,.06), transparent 60%),
+      radial-gradient(1000px 500px at 100% 0%, rgba(232,169,77,.05), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Inter',system-ui,sans-serif;
+    min-height:100vh;
+    padding:28px;
+    position:relative;
+    overflow-x:hidden;
+  }
+  body::before{
+    content:'';
+    position:fixed; inset:0; pointer-events:none; z-index:9999;
+    opacity:.035; mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .ambient-glow, .ambient-glow-2{position:fixed; border-radius:50%; pointer-events:none; z-index:0;}
+  .ambient-glow{
+    top:-220px; right:-200px; width:600px; height:600px;
+    background:radial-gradient(circle, rgba(45,212,191,.11), transparent 70%);
+    filter:blur(50px); animation:drift1 26s ease-in-out infinite alternate;
+  }
+  .ambient-glow-2{
+    bottom:-220px; left:-200px; width:560px; height:560px;
+    background:radial-gradient(circle, rgba(232,169,77,.08), transparent 70%);
+    filter:blur(55px); animation:drift2 32s ease-in-out infinite alternate;
+  }
+  @keyframes drift1{ from{transform:translate(0,0) scale(1);} to{transform:translate(-70px,50px) scale(1.15);} }
+  @keyframes drift2{ from{transform:translate(0,0) scale(1);} to{transform:translate(60px,-40px) scale(1.1);} }
+
+  h1,h2,h3{font-family:'Space Grotesk',system-ui,sans-serif; margin:0;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  button, input, select{font-family:inherit; color:inherit;}
+  input:focus-visible, select:focus-visible, button:focus-visible{outline:2px solid var(--dose); outline-offset:2px;}
+  ::-webkit-scrollbar{width:8px; height:8px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:var(--border); border-radius:8px;}
+  ::-webkit-scrollbar-thumb:hover{background:var(--text-faint);}
+
+  @keyframes riseIn{ from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:translateY(0);} }
+
+  .app{max-width:1180px; margin:0 auto; position:relative; z-index:1;}
+
+  .app-header{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:22px; gap:12px; flex-wrap:wrap; animation:riseIn .6s ease both;
+  }
+  .brand{display:flex; align-items:center; gap:14px;}
+  .brand-mark{
+    width:38px; height:38px; border-radius:11px; flex-shrink:0;
+    background:linear-gradient(135deg, var(--dose), var(--carb));
+    box-shadow:0 0 22px rgba(45,212,191,.35);
+  }
+  .brand h1{font-size:21px; font-weight:600; letter-spacing:-.01em;}
+  .brand .subtitle{margin:2px 0 0; font-size:13px; color:var(--text-muted);}
+  .icon-btn{
+    width:40px; height:40px; border-radius:10px;
+    background:rgba(23,28,38,.7); border:1px solid var(--border);
+    display:flex; align-items:center; justify-content:center;
+    font-size:17px; cursor:pointer; transition:all .15s; flex-shrink:0;
+  }
+  .icon-btn:hover{border-color:var(--dose); color:var(--dose);}
+  .icon-btn:active{transform:scale(.94);}
+
+  .view-tabs{display:flex; gap:10px; margin-bottom:20px; animation:riseIn .6s .03s ease both; flex-wrap:wrap;}
+  .view-tab{
+    background:rgba(23,28,38,.55); backdrop-filter:blur(16px); border:1px solid var(--border);
+    border-radius:11px; padding:11px 22px; cursor:pointer; font-size:14px; font-weight:600;
+    color:var(--text-muted); display:flex; align-items:center; gap:8px; transition:all .15s;
+  }
+  .view-tab:hover{border-color:var(--text-faint); color:var(--text);}
+  .view-tab:active{transform:scale(.98);}
+  .view-tab.active{
+    border-color:var(--dose); color:var(--text);
+    background:linear-gradient(180deg, rgba(45,212,191,.1), rgba(23,28,38,.55));
+    box-shadow:0 0 0 1px rgba(45,212,191,.25);
+  }
+  .badge{
+    background:var(--carb); color:#2b1a04; font-size:11px; font-weight:700; border-radius:10px;
+    padding:1px 7px; min-width:18px; text-align:center; line-height:1.5;
+  }
+
+  .meal-tabs{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:20px; animation:riseIn .6s .06s ease both;}
+  .meal-tab{
+    background:rgba(23,28,38,.55); backdrop-filter:blur(16px);
+    border:1px solid var(--border); border-radius:12px;
+    padding:13px 16px; cursor:pointer; text-align:left;
+    display:flex; flex-direction:column; gap:4px; transition:all .15s;
+  }
+  .meal-tab:hover{border-color:var(--text-faint);}
+  .meal-tab:active{transform:scale(.98);}
+  .meal-tab.active{
+    border-color:var(--dose);
+    background:linear-gradient(180deg, rgba(45,212,191,.1), rgba(23,28,38,.55));
+    box-shadow:0 0 0 1px rgba(45,212,191,.25), 0 0 24px rgba(45,212,191,.08);
+  }
+  .meal-name{font-weight:600; font-size:15px;}
+  .meal-ratio{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--text-muted);}
+  .meal-tab.active .meal-ratio{color:var(--dose);}
+
+  .layout{display:grid; grid-template-columns:1.25fr 1fr 280px; gap:18px; align-items:start;}
+  .panel{
+    background:rgba(18,22,31,.62); backdrop-filter:blur(24px) saturate(140%);
+    border:1px solid rgba(255,255,255,.07); border-top-color:rgba(255,255,255,.12);
+    box-shadow:0 1px 0 rgba(255,255,255,.03) inset, 0 24px 48px -28px rgba(0,0,0,.6);
+    border-radius:var(--radius); padding:18px;
+  }
+  .food-panel{animation:riseIn .6s .12s ease both;}
+  .meal-panel{animation:riseIn .6s .18s ease both;}
+  .dose-panel{animation:riseIn .6s .24s ease both;}
+  footer{animation:riseIn .6s .3s ease both;}
+
+  .panel-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;}
+  .panel-head h2{font-size:15px; font-weight:600;}
+
+  .text-btn{background:none; border:none; color:var(--dose); font-size:13px; font-weight:500; cursor:pointer; padding:4px 2px;}
+  .text-btn.danger{color:var(--text-muted);}
+  .text-btn.danger:hover{color:var(--danger);}
+  .text-btn:disabled{opacity:.4; cursor:default;}
+
+  .search-input{
+    width:100%; background:var(--surface-2); border:1px solid var(--border);
+    border-radius:9px; padding:10px 12px; font-size:14px; margin-bottom:10px;
+  }
+  .search-input::placeholder{color:var(--text-faint);}
+
+  .category-chips{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px;}
+  .chip{
+    background:var(--surface-2); border:1px solid var(--border); color:var(--text-muted);
+    border-radius:20px; padding:5px 12px; font-size:12px; cursor:pointer; transition:all .15s;
+  }
+  .chip:hover{color:var(--text);}
+  .chip.active{background:rgba(45,212,191,.12); border-color:var(--dose); color:var(--dose);}
+
+  .food-list{max-height:430px; overflow-y:auto; display:flex; flex-direction:column; gap:6px;}
+  .food-row{
+    display:flex; align-items:center; gap:8px;
+    background:var(--surface-2); border:1px solid transparent; border-radius:9px; padding:9px 10px;
+    transition:all .15s;
+  }
+  .food-row:hover{border-color:var(--border); background:#1B2130;}
+  .food-info{flex:1; min-width:0; display:flex; flex-direction:column; gap:1px;}
+  .food-name{font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .food-carbs{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--carb);}
+  .weight-input{
+    width:58px; background:var(--bg); border:1px solid var(--border); border-radius:7px;
+    padding:7px 8px; font-size:13px; text-align:right; font-family:'IBM Plex Mono',monospace;
+  }
+  .add-btn{
+    width:30px; height:30px; border-radius:8px; flex-shrink:0;
+    background:rgba(45,212,191,.12); border:1px solid rgba(45,212,191,.3); color:var(--dose);
+    font-size:16px; line-height:1; cursor:pointer; transition:all .15s;
+  }
+  .add-btn:hover{background:var(--dose); color:#08110F; box-shadow:0 0 16px var(--dose-glow);}
+  .add-btn:active{transform:scale(.9);}
+
+  .empty-hint{color:var(--text-faint); font-size:13px; text-align:center; padding:24px 8px;}
+
+  .favorites-row{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;}
+  .fav-chip{
+    display:flex; align-items:center; gap:6px; background:rgba(232,169,77,.1); border:1px solid rgba(232,169,77,.3);
+    border-radius:18px; padding:5px 6px 5px 12px; font-size:12.5px; cursor:pointer; transition:all .15s;
+  }
+  .fav-chip:hover{border-color:var(--carb); background:rgba(232,169,77,.16);}
+  .fav-name{color:var(--text);}
+  .fav-delete{background:none; border:none; color:var(--text-faint); font-size:14px; cursor:pointer; padding:0 4px; line-height:1;}
+  .fav-delete:hover{color:var(--danger);}
+
+  .meal-items{max-height:280px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; margin-bottom:14px;}
+  .meal-item-row{display:flex; align-items:center; gap:8px; background:var(--surface-2); border-radius:9px; padding:9px 10px;}
+  .mi-name{flex:1; min-width:0; font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .mi-weight{
+    width:56px; background:var(--bg); border:1px solid var(--border); border-radius:7px;
+    padding:6px 7px; font-size:13px; text-align:right; font-family:'IBM Plex Mono',monospace;
+  }
+  .mi-carbs{width:58px; text-align:right; font-family:'IBM Plex Mono',monospace; font-size:13px; color:var(--carb);}
+  .mi-remove{background:none; border:none; color:var(--text-faint); font-size:15px; cursor:pointer; padding:2px 4px;}
+  .mi-remove:hover{color:var(--danger);}
+
+  .meal-totals{border-top:1px solid var(--border); padding-top:12px; display:flex; flex-direction:column; gap:8px;}
+  .totals-row{display:flex; align-items:center; justify-content:space-between; font-size:13.5px; color:var(--text-muted);}
+  .totals-row strong{font-family:'IBM Plex Mono',monospace; color:var(--text); font-weight:600; font-size:14px;}
+  .totals-row strong.carb-color{color:var(--carb);}
+
+  .dose-panel{position:sticky; top:20px; text-align:center;}
+  .dose-panel h2{margin-bottom:16px; text-align:left;}
+  .barrel-wrap{display:flex; flex-direction:column; align-items:center; gap:16px;}
+  .barrel{
+    position:relative; width:70px; height:300px;
+    background:linear-gradient(180deg,#0D1119,#07090D);
+    border:1px solid var(--border); border-radius:35px; overflow:hidden;
+    box-shadow:inset 0 2px 14px rgba(0,0,0,.55), 0 12px 30px -12px rgba(45,212,191,.15);
+  }
+  .barrel-fill{
+    position:absolute; bottom:0; left:0; right:0; height:0%; z-index:1;
+    background:linear-gradient(180deg,#7EF0DD,var(--dose) 70%);
+    box-shadow:0 0 22px var(--dose-glow), 0 0 10px var(--dose-glow) inset;
+    border-radius:0 0 35px 35px; transition:height .5s cubic-bezier(.4,0,.2,1);
+  }
+  .barrel-fill::before{content:''; position:absolute; top:-6px; left:0; right:0; height:12px; background:inherit; border-radius:50%; filter:brightness(1.2);}
+  .bubble{position:absolute; bottom:4px; border-radius:50%; background:rgba(255,255,255,.6); animation:rise 2.8s infinite ease-in;}
+  .b1{left:16px; width:3px; height:3px; animation-delay:0s;}
+  .b2{left:34px; width:4px; height:4px; animation-delay:.8s;}
+  .b3{left:48px; width:2.5px; height:2.5px; animation-delay:1.6s;}
+  .b4{left:24px; width:3.5px; height:3.5px; animation-delay:2.3s;}
+  @keyframes rise{ 0%{transform:translateY(0); opacity:0;} 15%{opacity:.7;} 85%{opacity:.15;} 100%{transform:translateY(-64px); opacity:0;} }
+  .barrel-ticks{position:absolute; inset:0; z-index:2; display:flex; flex-direction:column-reverse; justify-content:space-between; padding:6px 0; pointer-events:none;}
+  .tick{display:flex; align-items:center; gap:4px; padding-left:6px;}
+  .tick::before{content:''; width:9px; height:1px; background:rgba(232,234,237,.3);}
+  .tick-label{font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--text-muted); text-shadow:0 1px 3px rgba(0,0,0,.9), 0 0 4px rgba(0,0,0,.9);}
+  .barrel-glass{
+    position:absolute; top:10px; bottom:10px; left:13px; width:9px; z-index:3; pointer-events:none;
+    background:linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,.02) 55%, rgba(255,255,255,.08));
+    border-radius:6px;
+  }
+  .barrel-marker{
+    position:absolute; left:-5px; right:-5px; height:2px; z-index:4;
+    background:#fff; box-shadow:0 0 6px #fff, 0 0 14px var(--dose-glow);
+    transition:bottom .5s cubic-bezier(.4,0,.2,1);
+  }
+  .dose-readout{display:flex; flex-direction:column; align-items:center; gap:2px;}
+  .dose-value{
+    font-family:'IBM Plex Mono',monospace; font-size:46px; font-weight:600; line-height:1;
+    background:linear-gradient(135deg,#8FF5E4,var(--dose) 65%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 0 22px var(--dose-glow));
+  }
+  .dose-unit{font-size:12px; color:var(--text-muted); letter-spacing:.05em; text-transform:uppercase;}
+  .dose-raw{font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--text-faint); margin-top:4px;}
+
+  .formula{
+    margin-top:18px; padding:12px; background:var(--surface-2); border:1px solid var(--border);
+    border-radius:9px; font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--text-muted);
+    line-height:1.5; word-break:break-word;
+  }
+  .save-journal-btn{width:100%; margin-top:14px;}
+
+  footer{margin-top:22px; text-align:center;}
+  footer p{font-size:12px; color:var(--text-faint); max-width:640px; margin:0 auto; line-height:1.6;}
+
+  /* ---- Journal / Fasting shared ---- */
+  .week-banner{
+    display:flex; gap:22px; flex-wrap:wrap; padding:12px 16px; margin-bottom:16px;
+    background:rgba(45,212,191,.06); border:1px solid rgba(45,212,191,.2); border-radius:11px; font-size:13px; color:var(--text-muted);
+  }
+  .week-banner strong{color:var(--text); font-weight:600; font-family:'IBM Plex Mono',monospace;}
+  .week-banner strong.hypo{color:var(--danger);}
+  .journal-stats{display:grid; grid-template-columns:repeat(3,1fr); gap:14px;}
+  .stat-card h3{font-size:14px; font-weight:600; margin-bottom:12px; display:flex; align-items:baseline; justify-content:space-between;}
+  .stat-card h3 .count{font-size:11px; font-weight:400; color:var(--text-faint); font-family:'IBM Plex Mono',monospace;}
+  .stat-numbers{display:flex; gap:20px; margin-bottom:10px;}
+  .stat-item{display:flex; flex-direction:column; gap:2px;}
+  .stat-item .num{font-family:'IBM Plex Mono',monospace; font-size:19px; font-weight:600;}
+  .stat-item .lbl{font-size:10px; color:var(--text-faint); text-transform:uppercase; letter-spacing:.04em;}
+  .stat-item .num.hypo{color:var(--danger);}
+  .stat-item .num.high{color:var(--carb);}
+  .sparkline{width:100%; height:36px; display:block; margin-top:4px;}
+
+  .journal-note{font-size:12px; color:var(--text-faint); line-height:1.5; margin:0 0 16px;}
+  .journal-toolbar{display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:14px;}
+  .journal-actions{display:flex; gap:14px;}
+  .journal-entries{display:flex; flex-direction:column; gap:10px;}
+  .entry-card{background:rgba(23,28,38,.5); border:1px solid var(--border); border-radius:12px; padding:14px 16px; transition:border-color .2s;}
+  .entry-pending{border-color:rgba(232,169,77,.5); animation:pendingPulse 2.4s ease-in-out infinite;}
+  @keyframes pendingPulse{ 0%,100%{box-shadow:0 0 0 rgba(232,169,77,0);} 50%{box-shadow:0 0 16px rgba(232,169,77,.22);} }
+  .entry-meta{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+  .entry-time{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--text-muted);}
+  .entry-meal-badge{font-size:11px; font-weight:600; padding:2px 9px; border-radius:10px; background:var(--surface-2); color:var(--text-muted);}
+  .entry-foods{font-size:13px; color:var(--text-muted); margin:9px 0 8px;}
+  .entry-figures{display:flex; gap:16px; flex-wrap:wrap; font-size:12.5px; color:var(--text-muted); margin-bottom:6px; align-items:center;}
+  .entry-figures strong{font-family:'IBM Plex Mono',monospace; color:var(--text); font-weight:600;}
+  .glucose-dot{width:9px; height:9px; border-radius:50%; display:inline-block; margin-right:5px; vertical-align:-1px;}
+  .glucose-dot.good{background:var(--good); box-shadow:0 0 8px rgba(74,222,128,.5);}
+  .glucose-dot.low{background:var(--danger); box-shadow:0 0 8px rgba(232,84,107,.5);}
+  .glucose-dot.high{background:var(--carb); box-shadow:0 0 8px var(--carb-glow);}
+  .entry-note{font-size:12.5px; color:var(--text-faint); font-style:italic; margin:4px 0 8px;}
+  .entry-actions{display:flex; gap:8px; margin-top:6px; flex-wrap:wrap;}
+  .entry-actions button{
+    background:var(--surface-2); border:1px solid var(--border); color:var(--text-muted);
+    border-radius:7px; padding:6px 12px; font-size:12px; cursor:pointer; transition:all .15s;
+  }
+  .entry-actions button:hover{border-color:var(--dose); color:var(--dose);}
+  .entry-actions button.danger-hover:hover{border-color:var(--danger); color:var(--danger);}
+
+  /* ---- Undo toast ---- */
+  .undo-toast{
+    position:fixed; left:50%; bottom:26px; transform:translate(-50%, 20px);
+    background:rgba(18,22,31,.95); backdrop-filter:blur(16px);
+    border:1px solid rgba(255,255,255,.1); border-radius:12px;
+    padding:12px 14px 12px 18px; display:flex; align-items:center; gap:16px;
+    box-shadow:0 12px 40px rgba(0,0,0,.5); z-index:200;
+    opacity:0; pointer-events:none; transition:opacity .25s ease, transform .25s ease;
+    font-size:13px;
+  }
+  .undo-toast.show{opacity:1; pointer-events:auto; transform:translate(-50%, 0);}
+  .undo-toast button{
+    background:rgba(45,212,191,.14); border:1px solid rgba(45,212,191,.35); color:var(--dose);
+    border-radius:7px; padding:6px 14px; font-size:12.5px; font-weight:600; cursor:pointer;
+  }
+  .undo-toast button:hover{background:var(--dose); color:#08110F;}
+
+  .overlay{
+    position:fixed; inset:0; background:rgba(5,7,10,.75); backdrop-filter:blur(6px);
+    display:none; align-items:center; justify-content:center; z-index:100; padding:20px;
+  }
+  .overlay.open{display:flex;}
+  .modal{
+    background:rgba(18,22,31,.92); backdrop-filter:blur(20px);
+    border:1px solid rgba(255,255,255,.08); border-radius:18px;
+    padding:26px; max-width:460px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,.55);
+    max-height:88vh; overflow-y:auto;
+  }
+  .modal.small{max-width:360px;}
+  .modal-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;}
+  .modal-head h2{font-size:17px;}
+  .modal-hint{font-size:12.5px; color:var(--text-muted); line-height:1.5; margin:6px 0 18px;}
+  .tdd-box{background:rgba(232,169,77,.06); border:1px solid rgba(232,169,77,.22); border-radius:12px; padding:16px; margin-bottom:16px;}
+  .tdd-box.range-box{background:rgba(45,212,191,.06); border-color:rgba(45,212,191,.22);}
+  .tdd-box label{display:flex; flex-direction:column; gap:6px; font-size:13px; color:var(--text-muted); margin-bottom:10px;}
+  .tdd-box input{background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:9px 11px; font-size:14px; color:var(--text); font-family:'IBM Plex Mono',monospace;}
+  .tdd-hint{font-size:11.5px; color:var(--text-faint); line-height:1.5; margin:10px 0 0;}
+  .settings-grid{display:flex; flex-direction:column; gap:14px; margin-bottom:8px;}
+  .settings-grid label{display:flex; flex-direction:column; gap:6px; font-size:13px; color:var(--text-muted);}
+  .settings-grid input, .settings-grid select{
+    background:var(--surface-2); border:1px solid var(--border); border-radius:8px;
+    padding:9px 11px; font-size:14px; color:var(--text); font-family:'IBM Plex Mono',monospace;
+  }
+  .modal label{display:flex; flex-direction:column; gap:6px; font-size:13px; color:var(--text-muted); margin-bottom:14px;}
+  .modal input[type="text"], .modal input[type="number"]{
+    background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:9px 11px; font-size:14px; color:var(--text);
+  }
+  .modal-actions{display:flex; gap:10px; flex-wrap:wrap; margin-top:4px;}
+  .btn{
+    flex:1; background:var(--dose); color:#08110F; border:none; border-radius:9px;
+    padding:11px 16px; font-size:13.5px; font-weight:600; cursor:pointer; transition:all .15s; white-space:nowrap;
+  }
+  .btn:hover{filter:brightness(1.08); box-shadow:0 4px 20px var(--dose-glow);}
+  .btn:active{transform:scale(.97);}
+  .btn:disabled{opacity:.5; cursor:default; box-shadow:none;}
+  .btn.ghost{background:transparent; border:1px solid var(--border); color:var(--text);}
+  .btn.ghost:hover{border-color:var(--dose); color:var(--dose); box-shadow:none;}
+  .save-status{font-size:12px; color:var(--text-faint); margin:10px 0 0; min-height:14px;}
+  .save-status.ok{color:var(--dose);}
+  .save-status.err{color:var(--danger);}
+
+  @media (max-width:980px){
+    .layout{grid-template-columns:1fr;}
+    .dose-panel{order:-1;}
+    .barrel{height:180px; width:56px;}
+    .dose-value{font-size:34px;}
+    body{padding:16px;}
+    .meal-tabs{grid-template-columns:1fr;}
+    .journal-stats{grid-template-columns:1fr;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none !important; animation:none !important;}
+  }
+</style>
 </head>
 <body>
-	<!-- Navigation -->
-	<div class="main-nav">
-		<div class="container">
-			<header class="group top-nav">
-				<div class="navigation-toggle" data-tools="navigation-toggle" data-target="#navbar-1">
-				    <span class="logo">DIZIR7772</span>
-				</div>
-			</header>
-		</div>
-	</div>
+  <div class="ambient-glow"></div>
+  <div class="ambient-glow-2"></div>
+
+  <div class="app">
+    <header class="app-header">
+      <div class="brand">
+        <span class="brand-mark"></span>
+        <div>
+          <h1>Вуглеводний калькулятор</h1>
+          <p class="subtitle">Вага продуктів → вуглеводи → одиниці інсуліну</p>
+        </div>
+      </div>
+      <button class="icon-btn" id="settingsBtn" title="Налаштування">⚙</button>
+    </header>
+
+    <nav class="view-tabs" id="viewTabs">
+      <button class="view-tab active" data-view="calculator">Калькулятор</button>
+      <button class="view-tab" data-view="journal">Журнал <span class="badge" id="pendingBadge" style="display:none;">0</span></button>
+      <button class="view-tab" data-view="fasting">Натще</button>
+    </nav>
+
+    <div id="calculatorView">
+      <nav class="meal-tabs" id="mealTabs">
+        <button class="meal-tab active" data-meal="breakfast">
+          <span class="meal-name">Сніданок</span>
+          <span class="meal-ratio mono" id="ratioLabel-breakfast">1 Од / 10 г</span>
+        </button>
+        <button class="meal-tab" data-meal="lunch">
+          <span class="meal-name">Обід</span>
+          <span class="meal-ratio mono" id="ratioLabel-lunch">1 Од / 12 г</span>
+        </button>
+        <button class="meal-tab" data-meal="dinner">
+          <span class="meal-name">Вечеря</span>
+          <span class="meal-ratio mono" id="ratioLabel-dinner">1 Од / 12 г</span>
+        </button>
+      </nav>
+
+      <main class="layout">
+        <section class="panel food-panel">
+          <div class="panel-head">
+            <h2>Продукти</h2>
+            <button class="text-btn" id="addCustomBtn">+ Свій продукт</button>
+          </div>
+          <input type="text" id="foodSearch" class="search-input" placeholder="Пошук продукту…">
+          <div class="category-chips" id="categoryChips"></div>
+          <div class="food-list" id="foodList"></div>
+        </section>
+
+        <section class="panel meal-panel">
+          <div class="panel-head">
+            <h2 id="mealPanelTitle">Сніданок — склад страви</h2>
+            <button class="text-btn danger" id="clearMealBtn">Очистити</button>
+          </div>
+          <div class="favorites-row" id="favoritesRow"></div>
+          <button class="text-btn" id="addFavoriteBtn" disabled style="margin-bottom:10px;">+ Зберегти поточне як улюблене</button>
+          <div class="meal-items" id="mealItems">
+            <p class="empty-hint">Додайте продукти зі списку ліворуч</p>
+          </div>
+          <div class="meal-totals">
+            <div class="totals-row"><span>Загальна вага</span><strong id="totalWeight" class="mono">0 г</strong></div>
+            <div class="totals-row"><span>Вуглеводи</span><strong id="totalCarbs" class="carb-color mono">0.0 г</strong></div>
+          </div>
+        </section>
+
+        <aside class="panel dose-panel">
+          <h2>Доза</h2>
+          <div class="barrel-wrap">
+            <div class="barrel" id="barrel">
+              <div class="barrel-fill" id="barrelFill">
+                <span class="bubble b1"></span>
+                <span class="bubble b2"></span>
+                <span class="bubble b3"></span>
+                <span class="bubble b4"></span>
+              </div>
+              <div class="barrel-ticks" id="barrelTicks"></div>
+              <div class="barrel-glass"></div>
+              <div class="barrel-marker" id="barrelMarker" style="bottom:0;"></div>
+            </div>
+            <div class="dose-readout">
+              <span class="dose-value" id="doseRounded">0.0</span>
+              <span class="dose-unit">одиниць</span>
+              <span class="dose-raw" id="doseRaw">точно: 0.00 Од</span>
+            </div>
+          </div>
+          <div class="formula" id="formula">0 г вуглеводів ÷ 10 г/Од = 0.00 Од → 0.0 Од</div>
+          <button class="btn save-journal-btn" id="saveJournalBtn" disabled>Зберегти в журнал</button>
+        </aside>
+      </main>
+
+      <footer>
+        <p>Довідкові значення вуглеводів — орієнтовні середні показники на 100 г. Перевіряй їх на етикетці продукту, коли є можливість. Вуглеводні коефіцієнти встав ті, що узгоджені з лікарем, — калькулятор лише рахує, рішення про дозу залишається за тобою.</p>
+      </footer>
+    </div>
+
+    <div id="journalView" style="display:none;">
+      <div class="week-banner" id="weekBanner"></div>
+      <section class="panel" style="margin-bottom:18px;">
+        <div class="panel-head"><h2>За прийомами їжі</h2></div>
+        <p class="journal-note">Кольори точок — орієнтовний діапазон цукру після їжі (за замовчуванням 3.9–10 ммоль/л, редагується в налаштуваннях): <span class="glucose-dot low"></span>гіпо, <span class="glucose-dot good"></span>в межах, <span class="glucose-dot high"></span>вище цілі. Це орієнтир для власного спостереження, не медичний висновок.</p>
+        <div class="journal-stats" id="journalStats"></div>
+      </section>
+
+      <section class="panel">
+        <div class="journal-toolbar">
+          <div class="category-chips" id="journalFilterChips"></div>
+          <div class="journal-actions">
+            <button class="text-btn" id="exportJsonBtn">Експорт JSON</button>
+            <button class="text-btn" id="exportCsvBtn">Експорт CSV</button>
+          </div>
+        </div>
+        <div class="journal-entries" id="journalEntries"></div>
+      </section>
+    </div>
+
+    <div id="fastingView" style="display:none;">
+      <section class="panel" style="margin-bottom:18px;">
+        <div class="panel-head">
+          <h2>Натще</h2>
+          <button class="text-btn" id="addFastingBtn">+ Додати вимір</button>
+        </div>
+        <p class="journal-note">Ранкові виміри, не прив'язані до їжі — показують, чи адекватний базальний інсулін окремо від дози на вуглеводи. Свій цільовий діапазон — у налаштуваннях.</p>
+        <div class="stat-numbers">
+          <div class="stat-item"><span class="num mono" id="fastingAvg">—</span><span class="lbl">сер. за 14 днів</span></div>
+          <div class="stat-item"><span class="num mono hypo" id="fastingLowCount">0</span><span class="lbl">нижче цілі</span></div>
+          <div class="stat-item"><span class="num mono high" id="fastingHighCount">0</span><span class="lbl">вище цілі</span></div>
+        </div>
+        <div id="fastingSparkline"></div>
+      </section>
+      <section class="panel">
+        <div class="journal-entries" id="fastingEntries"></div>
+      </section>
+    </div>
+  </div>
+
+  <div class="undo-toast" id="undoToast">
+    <span id="undoToastText">Видалено</span>
+    <button id="undoBtn">Скасувати</button>
+  </div>
+
+  <div class="overlay" id="settingsOverlay">
+    <div class="modal">
+      <div class="modal-head">
+        <h2>Налаштування</h2>
+        <button class="icon-btn" id="closeSettings">✕</button>
+      </div>
+      <p class="modal-hint">Кожен, хто користується цим калькулятором на своєму пристрої, налаштовує ці значення під себе.</p>
+
+      <div class="tdd-box">
+        <label>Добова доза інсуліну (ДДІ), Од/добу
+          <input type="number" id="tddInput" min="1" step="0.5" placeholder="напр. 40">
+        </label>
+        <button type="button" class="btn ghost" id="calcRatioBtn" style="width:100%;">Розрахувати коефіцієнт (правило 500)</button>
+        <p class="tdd-hint">Коефіцієнт = 500 ÷ ДДІ — заповнить усі три поля нижче однаковим стартовим числом. Це поширений клінічний орієнтир, а не персональна рекомендація: остаточні цифри уточнюй і коригуй з лікарем за фактичними цукрами після їжі, окремо для кожного прийому їжі.</p>
+      </div>
+
+      <div class="tdd-box range-box">
+        <label>Цільовий діапазон цукру після їжі, ммоль/л
+          <div style="display:flex; gap:8px; align-items:center;">
+            <input type="number" id="targetLow" min="1" step="0.1" value="3.9" style="flex:1;">
+            <span style="color:var(--text-faint);">—</span>
+            <input type="number" id="targetHigh" min="1" step="0.1" value="10" style="flex:1;">
+          </div>
+        </label>
+        <label>Цільовий діапазон натще, ммоль/л
+          <div style="display:flex; gap:8px; align-items:center;">
+            <input type="number" id="fastingLow" min="1" step="0.1" value="3.9" style="flex:1;">
+            <span style="color:var(--text-faint);">—</span>
+            <input type="number" id="fastingHigh" min="1" step="0.1" value="7.2" style="flex:1;">
+          </div>
+        </label>
+        <p class="tdd-hint">Лише для кольорового маркування записів. Стандартні орієнтовні межі — постав свої, якщо лікар визначив інші.</p>
+      </div>
+
+      <div class="settings-grid">
+        <label>Сніданок — 1 Од на, г вуглеводів
+          <input type="number" id="ratio-breakfast" min="1" step="0.5" value="10">
+        </label>
+        <label>Обід — 1 Од на, г вуглеводів
+          <input type="number" id="ratio-lunch" min="1" step="0.5" value="12">
+        </label>
+        <label>Вечеря — 1 Од на, г вуглеводів
+          <input type="number" id="ratio-dinner" min="1" step="0.5" value="12">
+        </label>
+        <label>Крок округлення дози
+          <select id="roundingStep">
+            <option value="1">1 Од (шприц-ручка)</option>
+            <option value="0.5" selected>0.5 Од (напівкрокова ручка)</option>
+            <option value="0.1">0.1 Од (помпа)</option>
+            <option value="0.05">0.05 Од (точна помпа)</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn" id="saveDataBtn">Зберегти у файл</button>
+        <button class="btn ghost" id="loadDataBtn">Завантажити з файлу</button>
+      </div>
+      <p class="save-status" id="saveStatus">Зберігає коефіцієнти, журнал, натще й улюблені — усе в один файл</p>
+      <input type="file" id="fileInputFallback" accept="application/json" style="display:none">
+    </div>
+  </div>
+
+  <div class="overlay" id="customFoodOverlay">
+    <div class="modal small">
+      <div class="modal-head">
+        <h2>Свій продукт</h2>
+        <button class="icon-btn" id="closeCustomFood">✕</button>
+      </div>
+      <label>Назва
+        <input type="text" id="customFoodName" placeholder="Напр. Вареники з картоплею">
+      </label>
+      <label>Вуглеводів на 100 г
+        <input type="number" id="customFoodCarbs" min="0" step="0.1" placeholder="Напр. 21">
+      </label>
+      <div class="modal-actions">
+        <button class="btn" id="saveCustomFoodBtn">Додати до бази</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="saveJournalOverlay">
+    <div class="modal small">
+      <div class="modal-head">
+        <h2>Зберегти в журнал</h2>
+        <button class="icon-btn" id="closeSaveJournal">✕</button>
+      </div>
+      <label>Одиниць введено (можна скоригувати)
+        <input type="number" id="journalUnits" min="0" step="0.5">
+      </label>
+      <label>Цукор до їжі, ммоль/л (необов'язково)
+        <input type="number" id="journalGlucoseBefore" min="0" step="0.1" placeholder="напр. 6.5">
+      </label>
+      <label>Нотатка (необов'язково)
+        <input type="text" id="journalNote" placeholder="напр. поспішав, стрес">
+      </label>
+      <div class="modal-actions">
+        <button class="btn" id="confirmSaveJournalBtn">Зберегти</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="followupOverlay">
+    <div class="modal small">
+      <div class="modal-head">
+        <h2>Додати результат</h2>
+        <button class="icon-btn" id="closeFollowup">✕</button>
+      </div>
+      <label>Цукор через ~2 год, ммоль/л
+        <input type="number" id="followupGlucose" min="0" step="0.1" placeholder="напр. 7.2">
+      </label>
+      <label>Нотатка (додасться до наявної)
+        <input type="text" id="followupNote" placeholder="необов'язково">
+      </label>
+      <div class="modal-actions">
+        <button class="btn" id="confirmFollowupBtn">Зберегти результат</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="saveFavoriteOverlay">
+    <div class="modal small">
+      <div class="modal-head">
+        <h2>Зберегти як улюблене</h2>
+        <button class="icon-btn" id="closeSaveFavorite">✕</button>
+      </div>
+      <label>Назва
+        <input type="text" id="favoriteName" placeholder="напр. Мій типовий сніданок">
+      </label>
+      <div class="modal-actions">
+        <button class="btn" id="confirmSaveFavoriteBtn">Зберегти</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="fastingOverlay">
+    <div class="modal small">
+      <div class="modal-head">
+        <h2>Вимір натще</h2>
+        <button class="icon-btn" id="closeFasting">✕</button>
+      </div>
+      <label>Цукор, ммоль/л
+        <input type="number" id="fastingGlucose" min="0" step="0.1" placeholder="напр. 6.2">
+      </label>
+      <label>Нотатка (необов'язково)
+        <input type="text" id="fastingNote" placeholder="напр. після нічної гіпо">
+      </label>
+      <div class="modal-actions">
+        <button class="btn" id="confirmFastingBtn">Зберегти</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+
+  var prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var FOOD_DB = [
+    {name:"Хліб білий", carbs:49, category:"Хліб і випічка", typical:30},
+    {name:"Хліб житній/чорний", carbs:42, category:"Хліб і випічка", typical:30},
+    {name:"Батон", carbs:50, category:"Хліб і випічка", typical:30},
+    {name:"Лаваш", carbs:47, category:"Хліб і випічка"},
+    {name:"Булочка здобна", carbs:55, category:"Хліб і випічка", typical:60},
+    {name:"Тости (хліб для тостів)", carbs:48, category:"Хліб і випічка", typical:25},
+    {name:"Круасан", carbs:46, category:"Хліб і випічка", typical:60},
+    {name:"Бублик", carbs:55, category:"Хліб і випічка", typical:70},
+    {name:"Сухарі", carbs:72, category:"Хліб і випічка"},
+    {name:"Крекери", carbs:68, category:"Хліб і випічка"},
+
+    {name:"Гречка варена", carbs:20, category:"Крупи (варені)", typical:150},
+    {name:"Рис білий варений", carbs:28, category:"Крупи (варені)", typical:150},
+    {name:"Рис бурий варений", carbs:23, category:"Крупи (варені)"},
+    {name:"Вівсянка варена", carbs:12, category:"Крупи (варені)", typical:200},
+    {name:"Пшоно варене", carbs:17, category:"Крупи (варені)"},
+    {name:"Перлова каша варена", carbs:22, category:"Крупи (варені)"},
+    {name:"Манна каша варена", carbs:15, category:"Крупи (варені)"},
+    {name:"Макарони варені", carbs:25, category:"Крупи (варені)", typical:150},
+    {name:"Кус-кус варений", carbs:23, category:"Крупи (варені)"},
+    {name:"Булгур варений", carbs:19, category:"Крупи (варені)"},
+    {name:"Кіноа варена", carbs:21, category:"Крупи (варені)"},
+
+    {name:"Гречка (суха)", carbs:62, category:"Крупи (сухі)"},
+    {name:"Рис білий (сухий)", carbs:78, category:"Крупи (сухі)"},
+    {name:"Вівсянка (суха)", carbs:60, category:"Крупи (сухі)"},
+    {name:"Макарони (сухі)", carbs:71, category:"Крупи (сухі)"},
+    {name:"Кіноа (суха)", carbs:64, category:"Крупи (сухі)"},
+
+    {name:"Картопля варена", carbs:17, category:"Картопля", typical:150},
+    {name:"Картопля смажена", carbs:23, category:"Картопля", typical:150},
+    {name:"Картопляне пюре", carbs:15, category:"Картопля", typical:180},
+    {name:"Картопля фрі", carbs:33, category:"Картопля", typical:120},
+    {name:"Картопля запечена", carbs:21, category:"Картопля", typical:150},
+
+    {name:"Квасоля варена", carbs:20, category:"Бобові"},
+    {name:"Горох варений", carbs:17, category:"Бобові"},
+    {name:"Сочевиця варена", carbs:20, category:"Бобові"},
+    {name:"Нут варений", carbs:27, category:"Бобові"},
+    {name:"Соя варена", carbs:10, category:"Бобові"},
+
+    {name:"Морква", carbs:7, category:"Овочі", typical:80},
+    {name:"Буряк варений", carbs:10, category:"Овочі", typical:100},
+    {name:"Капуста біла", carbs:5, category:"Овочі"},
+    {name:"Огірок", carbs:3, category:"Овочі", typical:100},
+    {name:"Помідор", carbs:4, category:"Овочі", typical:100},
+    {name:"Цибуля", carbs:9, category:"Овочі"},
+    {name:"Гарбуз", carbs:7, category:"Овочі"},
+    {name:"Кабачок", carbs:5, category:"Овочі"},
+    {name:"Перець солодкий", carbs:6, category:"Овочі"},
+    {name:"Кукурудза варена", carbs:19, category:"Овочі"},
+    {name:"Броколі", carbs:4, category:"Овочі"},
+    {name:"Цвітна капуста", carbs:3, category:"Овочі"},
+    {name:"Баклажан", carbs:5, category:"Овочі"},
+    {name:"Шпинат", carbs:3, category:"Овочі"},
+    {name:"Редиска", carbs:3, category:"Овочі"},
+    {name:"Селера (стебло)", carbs:2, category:"Овочі"},
+    {name:"Салат листовий", carbs:2, category:"Овочі"},
+    {name:"Часник", carbs:33, category:"Овочі"},
+
+    {name:"Яблуко", carbs:12, category:"Фрукти", typical:150},
+    {name:"Банан", carbs:22, category:"Фрукти", typical:120},
+    {name:"Апельсин", carbs:10, category:"Фрукти", typical:150},
+    {name:"Груша", carbs:11, category:"Фрукти", typical:150},
+    {name:"Виноград", carbs:16, category:"Фрукти", typical:100},
+    {name:"Полуниця", carbs:7, category:"Фрукти", typical:150},
+    {name:"Ківі", carbs:10, category:"Фрукти", typical:70},
+    {name:"Персик", carbs:9, category:"Фрукти", typical:130},
+    {name:"Слива", carbs:10, category:"Фрукти", typical:100},
+    {name:"Кавун", carbs:6, category:"Фрукти", typical:250},
+    {name:"Диня", carbs:8, category:"Фрукти", typical:200},
+    {name:"Мандарин", carbs:8, category:"Фрукти", typical:80},
+    {name:"Ананас", carbs:12, category:"Фрукти"},
+    {name:"Манго", carbs:15, category:"Фрукти"},
+    {name:"Гранат", carbs:14, category:"Фрукти"},
+    {name:"Абрикос", carbs:9, category:"Фрукти"},
+    {name:"Малина", carbs:5, category:"Фрукти"},
+    {name:"Чорниця", carbs:8, category:"Фрукти"},
+    {name:"Хурма", carbs:16, category:"Фрукти"},
+    {name:"Вишня", carbs:11, category:"Фрукти"},
+    {name:"Черешня", carbs:13, category:"Фрукти"},
+
+    {name:"Молоко 2.5%", carbs:4.7, category:"Молочні", typical:200},
+    {name:"Кефір", carbs:4, category:"Молочні", typical:200},
+    {name:"Йогурт натуральний", carbs:3.5, category:"Молочні", typical:150},
+    {name:"Сир кисломолочний 5-9%", carbs:3, category:"Молочні", typical:150},
+    {name:"Сметана", carbs:3, category:"Молочні"},
+    {name:"Сир твердий", carbs:1, category:"Молочні", typical:30},
+    {name:"Ряжанка", carbs:4, category:"Молочні"},
+    {name:"Йогурт грецький", carbs:4, category:"Молочні", typical:150},
+
+    {name:"Курка (філе)", carbs:0, category:"М'ясо/риба/яйця", typical:120},
+    {name:"Яловичина", carbs:0, category:"М'ясо/риба/яйця", typical:120},
+    {name:"Свинина", carbs:0, category:"М'ясо/риба/яйця"},
+    {name:"Риба", carbs:0, category:"М'ясо/риба/яйця", typical:120},
+    {name:"Яйце (1 шт ≈ 50г)", carbs:1, category:"М'ясо/риба/яйця", typical:50},
+    {name:"Індичка", carbs:0, category:"М'ясо/риба/яйця"},
+    {name:"Ковбаса варена", carbs:4, category:"М'ясо/риба/яйця"},
+    {name:"Сосиски", carbs:3, category:"М'ясо/риба/яйця"},
+    {name:"Креветки", carbs:1, category:"М'ясо/риба/яйця"},
+
+    {name:"Волоські горіхи", carbs:7, category:"Горіхи та насіння", typical:30},
+    {name:"Мигдаль", carbs:13, category:"Горіхи та насіння", typical:30},
+    {name:"Арахіс", carbs:10, category:"Горіхи та насіння"},
+    {name:"Насіння соняшника", carbs:13, category:"Горіхи та насіння"},
+    {name:"Кешью", carbs:22, category:"Горіхи та насіння"},
+
+    {name:"Борщ з м'ясом", carbs:7, category:"Готові страви", typical:250},
+    {name:"Вареники з картоплею", carbs:22, category:"Готові страви", typical:200},
+    {name:"Вареники з сиром", carbs:19, category:"Готові страви", typical:200},
+    {name:"Вареники з вишнею", carbs:26, category:"Готові страви", typical:200},
+    {name:"Деруни", carbs:19, category:"Готові страви", typical:150},
+    {name:"Сирники", carbs:24, category:"Готові страви", typical:150},
+    {name:"Млинці", carbs:28, category:"Готові страви", typical:150},
+    {name:"Голубці", carbs:11, category:"Готові страви", typical:250},
+    {name:"Плов", carbs:21, category:"Готові страви", typical:250},
+    {name:"Піца (шматок)", carbs:29, category:"Готові страви", typical:120},
+    {name:"Пельмені варені", carbs:20, category:"Готові страви", typical:200},
+    {name:"Котлета м'ясна", carbs:9, category:"Готові страви", typical:100},
+    {name:"Олів'є", carbs:9, category:"Готові страви", typical:150},
+    {name:"Вінегрет", carbs:10, category:"Готові страви", typical:150},
+
+    {name:"Цукор", carbs:100, category:"Солодощі"},
+    {name:"Мед", carbs:80, category:"Солодощі"},
+    {name:"Шоколад молочний", carbs:56, category:"Солодощі"},
+    {name:"Печиво", carbs:68, category:"Солодощі"},
+    {name:"Морозиво", carbs:22, category:"Солодощі", typical:100},
+    {name:"Варення", carbs:60, category:"Солодощі"},
+
+    {name:"Сік яблучний", carbs:11, category:"Напої", typical:200},
+    {name:"Сік апельсиновий", carbs:11, category:"Напої", typical:200},
+    {name:"Кола/солодка вода", carbs:10.6, category:"Напої", typical:250},
+    {name:"Компот", carbs:13, category:"Напої", typical:200}
+  ];
+
+  var MAX_SCALE = 30;
+  var mealLabels = {breakfast:"Сніданок", lunch:"Обід", dinner:"Вечеря"};
+
+  var state = {
+    meal:"breakfast",
+    items:[],
+    customFoods:[],
+    favorites:[],
+    ratios:{breakfast:10, lunch:12, dinner:12},
+    roundingStep:0.5,
+    tdd:null,
+    targetRange:{low:3.9, high:10},
+    fastingRange:{low:3.9, high:7.2},
+    journal:[],
+    fastingLog:[]
+  };
+  var itemIdCounter = 1;
+  var currentCategoryFilter = null;
+  var journalFilter = null;
+  var displayedDose = 0;
+  var doseAnimFrame = null;
+  var pendingJournalSnapshot = null;
+  var currentFollowupId = null;
+  var fileHandle = null;
+  var pendingUndo = null;
+
+  // ---- element refs ----
+  var foodSearchEl = document.getElementById('foodSearch');
+  var categoryChipsEl = document.getElementById('categoryChips');
+  var foodListEl = document.getElementById('foodList');
+  var mealItemsEl = document.getElementById('mealItems');
+  var totalWeightEl = document.getElementById('totalWeight');
+  var totalCarbsEl = document.getElementById('totalCarbs');
+  var doseRoundedEl = document.getElementById('doseRounded');
+  var doseRawEl = document.getElementById('doseRaw');
+  var barrelFillEl = document.getElementById('barrelFill');
+  var barrelMarkerEl = document.getElementById('barrelMarker');
+  var barrelTicksEl = document.getElementById('barrelTicks');
+  var formulaEl = document.getElementById('formula');
+  var mealPanelTitleEl = document.getElementById('mealPanelTitle');
+  var clearMealBtn = document.getElementById('clearMealBtn');
+  var saveJournalBtn = document.getElementById('saveJournalBtn');
+  var favoritesRowEl = document.getElementById('favoritesRow');
+  var addFavoriteBtn = document.getElementById('addFavoriteBtn');
+
+  var viewTabs = document.querySelectorAll('.view-tab');
+  var calculatorViewEl = document.getElementById('calculatorView');
+  var journalViewEl = document.getElementById('journalView');
+  var fastingViewEl = document.getElementById('fastingView');
+  var pendingBadgeEl = document.getElementById('pendingBadge');
+  var weekBannerEl = document.getElementById('weekBanner');
+  var journalStatsEl = document.getElementById('journalStats');
+  var journalFilterChipsEl = document.getElementById('journalFilterChips');
+  var journalEntriesEl = document.getElementById('journalEntries');
+  var exportJsonBtn = document.getElementById('exportJsonBtn');
+  var exportCsvBtn = document.getElementById('exportCsvBtn');
+
+  var addFastingBtn = document.getElementById('addFastingBtn');
+  var fastingOverlay = document.getElementById('fastingOverlay');
+  var closeFasting = document.getElementById('closeFasting');
+  var fastingGlucoseEl = document.getElementById('fastingGlucose');
+  var fastingNoteEl = document.getElementById('fastingNote');
+  var confirmFastingBtn = document.getElementById('confirmFastingBtn');
+  var fastingAvgEl = document.getElementById('fastingAvg');
+  var fastingLowCountEl = document.getElementById('fastingLowCount');
+  var fastingHighCountEl = document.getElementById('fastingHighCount');
+  var fastingSparklineEl = document.getElementById('fastingSparkline');
+  var fastingEntriesEl = document.getElementById('fastingEntries');
+
+  var settingsBtn = document.getElementById('settingsBtn');
+  var settingsOverlay = document.getElementById('settingsOverlay');
+  var closeSettings = document.getElementById('closeSettings');
+  var tddInput = document.getElementById('tddInput');
+  var calcRatioBtn = document.getElementById('calcRatioBtn');
+  var targetLowEl = document.getElementById('targetLow');
+  var targetHighEl = document.getElementById('targetHigh');
+  var fastingLowEl = document.getElementById('fastingLow');
+  var fastingHighEl = document.getElementById('fastingHigh');
+  var ratioInputs = {
+    breakfast: document.getElementById('ratio-breakfast'),
+    lunch: document.getElementById('ratio-lunch'),
+    dinner: document.getElementById('ratio-dinner')
+  };
+  var roundingStepEl = document.getElementById('roundingStep');
+  var saveStatusEl = document.getElementById('saveStatus');
+  var saveDataBtn = document.getElementById('saveDataBtn');
+  var loadDataBtn = document.getElementById('loadDataBtn');
+  var fileInputFallback = document.getElementById('fileInputFallback');
+
+  var addCustomBtn = document.getElementById('addCustomBtn');
+  var customFoodOverlay = document.getElementById('customFoodOverlay');
+  var closeCustomFood = document.getElementById('closeCustomFood');
+  var customFoodNameEl = document.getElementById('customFoodName');
+  var customFoodCarbsEl = document.getElementById('customFoodCarbs');
+  var saveCustomFoodBtn = document.getElementById('saveCustomFoodBtn');
+
+  var saveJournalOverlay = document.getElementById('saveJournalOverlay');
+  var closeSaveJournal = document.getElementById('closeSaveJournal');
+  var journalUnitsEl = document.getElementById('journalUnits');
+  var journalGlucoseBeforeEl = document.getElementById('journalGlucoseBefore');
+  var journalNoteEl = document.getElementById('journalNote');
+  var confirmSaveJournalBtn = document.getElementById('confirmSaveJournalBtn');
+
+  var followupOverlay = document.getElementById('followupOverlay');
+  var closeFollowup = document.getElementById('closeFollowup');
+  var followupGlucoseEl = document.getElementById('followupGlucose');
+  var followupNoteEl = document.getElementById('followupNote');
+  var confirmFollowupBtn = document.getElementById('confirmFollowupBtn');
+
+  var saveFavoriteOverlay = document.getElementById('saveFavoriteOverlay');
+  var closeSaveFavorite = document.getElementById('closeSaveFavorite');
+  var favoriteNameEl = document.getElementById('favoriteName');
+  var confirmSaveFavoriteBtn = document.getElementById('confirmSaveFavoriteBtn');
+
+  var undoToastEl = document.getElementById('undoToast');
+  var undoToastTextEl = document.getElementById('undoToastText');
+  var undoBtn = document.getElementById('undoBtn');
+
+  // ---- helpers ----
+  function escapeHtml(str){
+    var div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+  function allFoods(){ return FOOD_DB.concat(state.customFoods); }
+  function fmt(n, decimals){ return Number(n).toFixed(decimals); }
+  function uid(){ return 'j' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+  function formatEntryTime(iso){
+    var d = new Date(iso);
+    return d.toLocaleString('uk-UA', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
+  }
+  function zoneFor(v, range){
+    if (v === null || v === undefined || isNaN(v)) return null;
+    if (v < range.low) return 'low';
+    if (v > range.high) return 'high';
+    return 'good';
+  }
+  function glucoseZone(v){ return zoneFor(v, state.targetRange); }
+  function fastingZone(v){ return zoneFor(v, state.fastingRange); }
+
+  // ---- undo toast (generic) ----
+  function scheduleUndo(label, restoreFn){
+    if (pendingUndo) pendingUndo.commit();
+    undoToastTextEl.textContent = label;
+    undoToastEl.classList.add('show');
+    var timeoutId = setTimeout(function(){
+      undoToastEl.classList.remove('show');
+      pendingUndo = null;
+    }, 4200);
+    pendingUndo = {
+      restore: restoreFn,
+      commit: function(){ clearTimeout(timeoutId); undoToastEl.classList.remove('show'); }
+    };
+  }
+  undoBtn.addEventListener('click', function(){
+    if (!pendingUndo) return;
+    var p = pendingUndo;
+    pendingUndo = null;
+    p.commit();
+    p.restore();
+  });
+
+  // ---- food list rendering ----
+  function renderCategoryChips(){
+    var categories = [];
+    allFoods().forEach(function(f){
+      if (categories.indexOf(f.category) === -1) categories.push(f.category);
+    });
+    var html = '<button class="chip' + (currentCategoryFilter===null?' active':'') + '" data-cat="">Усі</button>';
+    categories.forEach(function(c){
+      html += '<button class="chip' + (currentCategoryFilter===c?' active':'') + '" data-cat="' + escapeHtml(c) + '">' + escapeHtml(c) + '</button>';
+    });
+    categoryChipsEl.innerHTML = html;
+    Array.prototype.forEach.call(categoryChipsEl.querySelectorAll('.chip'), function(chip){
+      chip.addEventListener('click', function(){
+        currentCategoryFilter = chip.getAttribute('data-cat') || null;
+        renderCategoryChips();
+        renderFoodList();
+      });
+    });
+  }
+
+  function renderFoodList(){
+    var query = foodSearchEl.value.trim().toLowerCase();
+    var list = allFoods().filter(function(f){
+      var matchesQuery = !query || f.name.toLowerCase().indexOf(query) !== -1;
+      var matchesCat = !currentCategoryFilter || f.category === currentCategoryFilter;
+      return matchesQuery && matchesCat;
+    });
+    foodListEl.innerHTML = '';
+    if (list.length === 0){
+      foodListEl.innerHTML = '<p class="empty-hint">Нічого не знайдено. Спробуй інший запит або додай свій продукт.</p>';
+      return;
+    }
+    list.forEach(function(food){
+      var row = document.createElement('div');
+      row.className = 'food-row';
+      row.innerHTML =
+        '<div class="food-info">' +
+          '<span class="food-name">' + escapeHtml(food.name) + '</span>' +
+          '<span class="food-carbs mono">' + food.carbs + ' г/100г' + (food.typical ? ' · ≈' + food.typical + 'г порція' : '') + '</span>' +
+        '</div>' +
+        '<input type="number" class="weight-input" placeholder="' + (food.typical || 'г') + '" min="0" step="1">' +
+        '<button class="add-btn" title="Додати">+</button>';
+      var weightInput = row.querySelector('.weight-input');
+      var addBtn = row.querySelector('.add-btn');
+      function doAdd(){
+        var w = parseFloat(weightInput.value);
+        if (!w || w <= 0){
+          if (food.typical){ w = food.typical; }
+          else { weightInput.focus(); return; }
+        }
+        addItemToMeal(food, w);
+        weightInput.value = '';
+        weightInput.focus();
+      }
+      addBtn.addEventListener('click', doAdd);
+      weightInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') doAdd(); });
+      foodListEl.appendChild(row);
+    });
+  }
+
+  // ---- meal items ----
+  function addItemToMeal(food, weight){
+    state.items.push({id:itemIdCounter++, name:food.name, carbsPer100g:food.carbs, weight:weight});
+    renderMealItems();
+    renderTotals();
+  }
+  function removeItem(id){
+    state.items = state.items.filter(function(i){ return i.id !== id; });
+    renderMealItems();
+    renderTotals();
+  }
+  function updateItemWeight(id, weight){
+    var item = state.items.find(function(i){ return i.id === id; });
+    if (item) item.weight = weight;
+    renderTotals();
+  }
+
+  function renderMealItems(){
+    if (state.items.length === 0){
+      mealItemsEl.innerHTML = '<p class="empty-hint">Додайте продукти зі списку ліворуч</p>';
+      return;
+    }
+    mealItemsEl.innerHTML = '';
+    state.items.forEach(function(item){
+      var carbs = item.weight/100*item.carbsPer100g;
+      var row = document.createElement('div');
+      row.className = 'meal-item-row';
+      row.innerHTML =
+        '<span class="mi-name">' + escapeHtml(item.name) + '</span>' +
+        '<input type="number" class="mi-weight" value="' + item.weight + '" min="0" step="1">' +
+        '<span class="mi-carbs">' + fmt(carbs,1) + ' г</span>' +
+        '<button class="mi-remove" title="Видалити">✕</button>';
+      var weightInput = row.querySelector('.mi-weight');
+      var carbsLabel = row.querySelector('.mi-carbs');
+      weightInput.addEventListener('input', function(){
+        var w = parseFloat(weightInput.value) || 0;
+        updateItemWeight(item.id, w);
+        carbsLabel.textContent = fmt(w/100*item.carbsPer100g,1) + ' г';
+      });
+      row.querySelector('.mi-remove').addEventListener('click', function(){ removeItem(item.id); });
+      mealItemsEl.appendChild(row);
+    });
+  }
+
+  function clearMeal(){
+    state.items = [];
+    renderMealItems();
+    renderTotals();
+  }
+
+  // ---- totals & dose ----
+  function computeDose(){
+    var totalWeight = state.items.reduce(function(s,i){ return s+i.weight; }, 0);
+    var totalCarbs = state.items.reduce(function(s,i){ return s + (i.weight/100*i.carbsPer100g); }, 0);
+    var ratio = state.ratios[state.meal] || 1;
+    var rawUnits = ratio > 0 ? totalCarbs/ratio : 0;
+    var step = state.roundingStep;
+    var roundedUnits = step > 0 ? Math.round(rawUnits/step)*step : rawUnits;
+    var decimals = step < 1 ? 2 : 1;
+    return {totalWeight:totalWeight, totalCarbs:totalCarbs, ratio:ratio, rawUnits:rawUnits, roundedUnits:roundedUnits, decimals:decimals};
+  }
+
+  function animateDoseValue(newValue, decimals){
+    if (prefersReducedMotion){
+      displayedDose = newValue;
+      doseRoundedEl.textContent = fmt(newValue, decimals);
+      return;
+    }
+    if (doseAnimFrame) cancelAnimationFrame(doseAnimFrame);
+    var start = displayedDose;
+    var startTime = performance.now();
+    var duration = 400;
+    function step(now){
+      var t = Math.min(1, (now - startTime)/duration);
+      var eased = 1 - Math.pow(1-t, 3);
+      var current = start + (newValue - start) * eased;
+      doseRoundedEl.textContent = fmt(current, decimals);
+      if (t < 1){ doseAnimFrame = requestAnimationFrame(step); }
+      else { displayedDose = newValue; doseRoundedEl.textContent = fmt(newValue, decimals); doseAnimFrame = null; }
+    }
+    doseAnimFrame = requestAnimationFrame(step);
+  }
+
+  function renderTotals(){
+    var d = computeDose();
+    totalWeightEl.textContent = fmt(d.totalWeight,0) + ' г';
+    totalCarbsEl.textContent = fmt(d.totalCarbs,1) + ' г';
+    animateDoseValue(d.roundedUnits, d.decimals);
+    doseRawEl.textContent = 'точно: ' + fmt(d.rawUnits,2) + ' Од';
+
+    var fillPct = Math.min(100, (d.rawUnits/MAX_SCALE)*100);
+    barrelFillEl.style.height = fillPct + '%';
+    var markerPct = Math.min(100, (d.roundedUnits/MAX_SCALE)*100);
+    barrelMarkerEl.style.bottom = 'calc(' + markerPct + '% - 1px)';
+
+    formulaEl.textContent = fmt(d.totalCarbs,1) + ' г вуглеводів ÷ ' + d.ratio + ' г/Од = ' + fmt(d.rawUnits,2) + ' Од → ' + fmt(d.roundedUnits,d.decimals) + ' Од';
+    saveJournalBtn.disabled = state.items.length === 0;
+    addFavoriteBtn.disabled = state.items.length === 0;
+  }
+
+  function renderTicks(){
+    barrelTicksEl.innerHTML = '';
+    for (var v=0; v<=MAX_SCALE; v+=5){
+      var tick = document.createElement('div');
+      tick.className = 'tick';
+      tick.innerHTML = '<span class="tick-label mono">' + v + '</span>';
+      barrelTicksEl.appendChild(tick);
+    }
+  }
+
+  // ---- meal tabs ----
+  function updateMealTabLabels(){
+    Object.keys(mealLabels).forEach(function(m){
+      document.getElementById('ratioLabel-'+m).textContent = '1 Од / ' + state.ratios[m] + ' г';
+    });
+    mealPanelTitleEl.textContent = mealLabels[state.meal] + ' — склад страви';
+  }
+  function setActiveMealTab(meal){
+    Array.prototype.forEach.call(document.querySelectorAll('.meal-tab'), function(t){
+      t.classList.toggle('active', t.getAttribute('data-meal') === meal);
+    });
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('.meal-tab'), function(tab){
+    tab.addEventListener('click', function(){
+      setActiveMealTab(tab.getAttribute('data-meal'));
+      state.meal = tab.getAttribute('data-meal');
+      updateMealTabLabels();
+      renderTotals();
+    });
+  });
+
+  clearMealBtn.addEventListener('click', clearMeal);
+  foodSearchEl.addEventListener('input', renderFoodList);
+
+  // ---- favorites ----
+  function renderFavorites(){
+    if (state.favorites.length === 0){
+      favoritesRowEl.innerHTML = '';
+      return;
+    }
+    favoritesRowEl.innerHTML = state.favorites.map(function(f){
+      return '<div class="fav-chip" data-id="' + f.id + '">' +
+        '<span class="fav-name" data-action="apply-fav">' + escapeHtml(f.name) + '</span>' +
+        '<button class="fav-delete" data-action="delete-fav" title="Видалити">×</button>' +
+      '</div>';
+    }).join('');
+  }
+  favoritesRowEl.addEventListener('click', function(ev){
+    var chip = ev.target.closest('.fav-chip');
+    if (!chip) return;
+    var id = chip.getAttribute('data-id');
+    if (ev.target.closest('[data-action="delete-fav"]')) deleteFavorite(id);
+    else applyFavorite(id);
+  });
+  function applyFavorite(id){
+    var f = state.favorites.find(function(x){ return x.id === id; });
+    if (!f) return;
+    state.items = f.items.map(function(i){ return {id:itemIdCounter++, name:i.name, carbsPer100g:i.carbsPer100g, weight:i.weight}; });
+    renderMealItems();
+    renderTotals();
+  }
+  function deleteFavorite(id){
+    var idx = state.favorites.findIndex(function(f){ return f.id === id; });
+    if (idx === -1) return;
+    var fav = state.favorites[idx];
+    state.favorites.splice(idx,1);
+    renderFavorites();
+    scheduleUndo('Улюблене «' + fav.name + '» видалено', function(){ state.favorites.splice(idx,0,fav); renderFavorites(); });
+  }
+  addFavoriteBtn.addEventListener('click', function(){
+    if (state.items.length === 0) return;
+    favoriteNameEl.value = '';
+    openOverlay(saveFavoriteOverlay);
+    favoriteNameEl.focus();
+  });
+  closeSaveFavorite.addEventListener('click', function(){ closeOverlayEl(saveFavoriteOverlay); });
+  function confirmSaveFavorite(){
+    var name = favoriteNameEl.value.trim();
+    if (!name){ favoriteNameEl.focus(); return; }
+    state.favorites.push({
+      id: uid(), name: name,
+      items: state.items.map(function(i){ return {name:i.name, weight:i.weight, carbsPer100g:i.carbsPer100g}; })
+    });
+    closeOverlayEl(saveFavoriteOverlay);
+    renderFavorites();
+  }
+  confirmSaveFavoriteBtn.addEventListener('click', confirmSaveFavorite);
+  favoriteNameEl.addEventListener('keydown', function(e){ if (e.key === 'Enter') confirmSaveFavorite(); });
+
+  // ---- view switching ----
+  function switchView(view){
+    calculatorViewEl.style.display = view === 'calculator' ? '' : 'none';
+    journalViewEl.style.display = view === 'journal' ? '' : 'none';
+    fastingViewEl.style.display = view === 'fasting' ? '' : 'none';
+    Array.prototype.forEach.call(viewTabs, function(t){ t.classList.toggle('active', t.getAttribute('data-view')===view); });
+    if (view === 'journal') renderJournal();
+    if (view === 'fasting') renderFasting();
+  }
+  Array.prototype.forEach.call(viewTabs, function(tab){
+    tab.addEventListener('click', function(){ switchView(tab.getAttribute('data-view')); });
+  });
+
+  // ---- overlays ----
+  function openOverlay(el){ el.classList.add('open'); }
+  function closeOverlayEl(el){ el.classList.remove('open'); }
+  [settingsOverlay, customFoodOverlay, saveJournalOverlay, followupOverlay, saveFavoriteOverlay, fastingOverlay].forEach(function(ov){
+    ov.addEventListener('click', function(e){ if (e.target === ov) closeOverlayEl(ov); });
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape'){
+      [settingsOverlay, customFoodOverlay, saveJournalOverlay, followupOverlay, saveFavoriteOverlay, fastingOverlay].forEach(closeOverlayEl);
+    }
+  });
+
+  // ---- settings ----
+  function syncSettingsInputs(){
+    ratioInputs.breakfast.value = state.ratios.breakfast;
+    ratioInputs.lunch.value = state.ratios.lunch;
+    ratioInputs.dinner.value = state.ratios.dinner;
+    roundingStepEl.value = String(state.roundingStep);
+    tddInput.value = state.tdd || '';
+    targetLowEl.value = state.targetRange.low;
+    targetHighEl.value = state.targetRange.high;
+    fastingLowEl.value = state.fastingRange.low;
+    fastingHighEl.value = state.fastingRange.high;
+  }
+  settingsBtn.addEventListener('click', function(){ syncSettingsInputs(); openOverlay(settingsOverlay); });
+  closeSettings.addEventListener('click', function(){ closeOverlayEl(settingsOverlay); });
+
+  Object.keys(ratioInputs).forEach(function(m){
+    ratioInputs[m].addEventListener('input', function(){
+      var v = parseFloat(ratioInputs[m].value);
+      if (v && v > 0) state.ratios[m] = v;
+      updateMealTabLabels();
+      renderTotals();
+    });
+  });
+  roundingStepEl.addEventListener('change', function(){
+    state.roundingStep = parseFloat(roundingStepEl.value);
+    renderTotals();
+  });
+
+  calcRatioBtn.addEventListener('click', function(){
+    var tdd = parseFloat(tddInput.value);
+    if (!tdd || tdd <= 0){ tddInput.focus(); return; }
+    var ratio = Math.max(1, Math.round(500/tdd));
+    state.tdd = tdd;
+    state.ratios.breakfast = ratio;
+    state.ratios.lunch = ratio;
+    state.ratios.dinner = ratio;
+    syncSettingsInputs();
+    updateMealTabLabels();
+    renderTotals();
+  });
+
+  function applyTargetRange(){
+    var lo = parseFloat(targetLowEl.value);
+    var hi = parseFloat(targetHighEl.value);
+    if (!isNaN(lo) && !isNaN(hi) && lo > 0 && hi > lo){ state.targetRange = {low:lo, high:hi}; }
+    else { targetLowEl.value = state.targetRange.low; targetHighEl.value = state.targetRange.high; }
+  }
+  function applyFastingRange(){
+    var lo = parseFloat(fastingLowEl.value);
+    var hi = parseFloat(fastingHighEl.value);
+    if (!isNaN(lo) && !isNaN(hi) && lo > 0 && hi > lo){ state.fastingRange = {low:lo, high:hi}; }
+    else { fastingLowEl.value = state.fastingRange.low; fastingHighEl.value = state.fastingRange.high; }
+  }
+  targetLowEl.addEventListener('change', applyTargetRange);
+  targetHighEl.addEventListener('change', applyTargetRange);
+  fastingLowEl.addEventListener('change', applyFastingRange);
+  fastingHighEl.addEventListener('change', applyFastingRange);
+
+  // ---- custom food ----
+  addCustomBtn.addEventListener('click', function(){
+    customFoodNameEl.value = '';
+    customFoodCarbsEl.value = '';
+    openOverlay(customFoodOverlay);
+    customFoodNameEl.focus();
+  });
+  closeCustomFood.addEventListener('click', function(){ closeOverlayEl(customFoodOverlay); });
+
+  function saveCustomFood(){
+    var name = customFoodNameEl.value.trim();
+    var carbs = parseFloat(customFoodCarbsEl.value);
+    if (!name){ customFoodNameEl.focus(); return; }
+    if (isNaN(carbs) || carbs < 0){ customFoodCarbsEl.focus(); return; }
+    state.customFoods.push({name:name, carbs:carbs, category:"Свої продукти"});
+    closeOverlayEl(customFoodOverlay);
+    renderCategoryChips();
+    renderFoodList();
+  }
+  saveCustomFoodBtn.addEventListener('click', saveCustomFood);
+  [customFoodNameEl, customFoodCarbsEl].forEach(function(el){
+    el.addEventListener('keydown', function(e){ if (e.key === 'Enter') saveCustomFood(); });
+  });
+
+  // ============================================================
+  // Journal
+  // ============================================================
+  function updatePendingBadge(){
+    var pending = state.journal.filter(function(e){ return e.glucoseAfter === null || e.glucoseAfter === undefined; }).length;
+    if (pending > 0){ pendingBadgeEl.style.display = 'inline-block'; pendingBadgeEl.textContent = pending; }
+    else { pendingBadgeEl.style.display = 'none'; }
+  }
+
+  saveJournalBtn.addEventListener('click', function(){
+    if (state.items.length === 0) return;
+    var d = computeDose();
+    pendingJournalSnapshot = {
+      items: state.items.map(function(i){ return {name:i.name, weight:i.weight, carbsPer100g:i.carbsPer100g}; }),
+      totalCarbs: d.totalCarbs, ratio: d.ratio, meal: state.meal
+    };
+    journalUnitsEl.value = fmt(d.roundedUnits, d.decimals);
+    journalGlucoseBeforeEl.value = '';
+    journalNoteEl.value = '';
+    openOverlay(saveJournalOverlay);
+  });
+  closeSaveJournal.addEventListener('click', function(){ closeOverlayEl(saveJournalOverlay); });
+
+  function confirmSaveJournal(){
+    if (!pendingJournalSnapshot) return;
+    var units = parseFloat(journalUnitsEl.value);
+    var gB = journalGlucoseBeforeEl.value !== '' ? parseFloat(journalGlucoseBeforeEl.value) : null;
+    var entry = {
+      id: uid(), ts: new Date().toISOString(),
+      meal: pendingJournalSnapshot.meal, items: pendingJournalSnapshot.items,
+      totalCarbs: pendingJournalSnapshot.totalCarbs, ratio: pendingJournalSnapshot.ratio,
+      units: isNaN(units) ? 0 : units, glucoseBefore: (gB !== null && !isNaN(gB)) ? gB : null,
+      glucoseAfter: null, note: journalNoteEl.value.trim()
+    };
+    state.journal.unshift(entry);
+    pendingJournalSnapshot = null;
+    closeOverlayEl(saveJournalOverlay);
+    updatePendingBadge();
+  }
+  confirmSaveJournalBtn.addEventListener('click', confirmSaveJournal);
+  [journalGlucoseBeforeEl, journalNoteEl].forEach(function(el){
+    el.addEventListener('keydown', function(e){ if (e.key === 'Enter') confirmSaveJournal(); });
+  });
+
+  closeFollowup.addEventListener('click', function(){ closeOverlayEl(followupOverlay); });
+  function openFollowup(id){
+    currentFollowupId = id;
+    followupGlucoseEl.value = '';
+    followupNoteEl.value = '';
+    openOverlay(followupOverlay);
+    followupGlucoseEl.focus();
+  }
+  function confirmFollowup(){
+    if (!currentFollowupId) return;
+    var entry = state.journal.find(function(e){ return e.id === currentFollowupId; });
+    if (entry){
+      var g = parseFloat(followupGlucoseEl.value);
+      if (!isNaN(g)) entry.glucoseAfter = g;
+      var note = followupNoteEl.value.trim();
+      if (note) entry.note = entry.note ? (entry.note + ' | ' + note) : note;
+    }
+    currentFollowupId = null;
+    closeOverlayEl(followupOverlay);
+    updatePendingBadge();
+    renderJournal();
+  }
+  confirmFollowupBtn.addEventListener('click', confirmFollowup);
+  [followupGlucoseEl, followupNoteEl].forEach(function(el){
+    el.addEventListener('keydown', function(e){ if (e.key === 'Enter') confirmFollowup(); });
+  });
+
+  function repeatEntry(id){
+    var e = state.journal.find(function(x){ return x.id === id; });
+    if (!e) return;
+    state.items = e.items.map(function(i){ return {id:itemIdCounter++, name:i.name, carbsPer100g:i.carbsPer100g, weight:i.weight}; });
+    state.meal = e.meal;
+    setActiveMealTab(e.meal);
+    updateMealTabLabels();
+    renderMealItems();
+    renderTotals();
+    switchView('calculator');
+  }
+  function deleteEntry(id){
+    var idx = state.journal.findIndex(function(e){ return e.id === id; });
+    if (idx === -1) return;
+    var entry = state.journal[idx];
+    state.journal.splice(idx,1);
+    updatePendingBadge();
+    renderJournal();
+    scheduleUndo('Запис журналу видалено', function(){
+      state.journal.splice(idx,0,entry);
+      updatePendingBadge();
+      renderJournal();
+    });
+  }
+
+  journalEntriesEl.addEventListener('click', function(ev){
+    var card = ev.target.closest('.entry-card');
+    if (!card) return;
+    var id = card.getAttribute('data-id');
+    if (ev.target.closest('[data-action="repeat"]')) repeatEntry(id);
+    else if (ev.target.closest('[data-action="followup"]')) openFollowup(id);
+    else if (ev.target.closest('[data-action="delete"]')) deleteEntry(id);
+  });
+
+  function renderJournalFilterChips(){
+    var chips = [{key:'', label:'Усі'},{key:'breakfast', label:'Сніданок'},{key:'lunch', label:'Обід'},{key:'dinner', label:'Вечеря'}];
+    journalFilterChipsEl.innerHTML = chips.map(function(c){
+      return '<button class="chip' + ((journalFilter||'')===c.key?' active':'') + '" data-key="' + c.key + '">' + c.label + '</button>';
+    }).join('');
+    Array.prototype.forEach.call(journalFilterChipsEl.querySelectorAll('.chip'), function(chip){
+      chip.addEventListener('click', function(){
+        journalFilter = chip.getAttribute('data-key') || null;
+        renderJournalFilterChips();
+        renderJournalEntries();
+      });
+    });
+  }
+
+  function buildSparklineSvg(values, range){
+    var w = 140, h = 36, padX = 4, padY = 6;
+    if (!values.length){
+      return '<svg class="sparkline" viewBox="0 0 ' + w + ' ' + h + '"><text x="' + (w/2) + '" y="' + (h/2+4) + '" text-anchor="middle" font-size="10" fill="#4B5563">ще немає даних</text></svg>';
+    }
+    var lo = 2, hi = 15;
+    function xPos(i){ return values.length===1 ? w/2 : padX + (i/(values.length-1))*(w-2*padX); }
+    function yPos(v){ var c = Math.max(lo, Math.min(hi, v)); return h - padY - ((c-lo)/(hi-lo))*(h-2*padY); }
+    var pts = values.map(function(v,i){ return xPos(i)+','+yPos(v); }).join(' ');
+    var dots = values.map(function(v,i){
+      var zone = zoneFor(v, range);
+      var color = zone==='low' ? '#E8546B' : (zone==='high' ? '#E8A94D' : '#4ADE80');
+      return '<circle cx="'+xPos(i)+'" cy="'+yPos(v)+'" r="2.6" fill="'+color+'"/>';
+    }).join('');
+    var loY = yPos(range.low), hiY = yPos(range.high);
+    return '<svg class="sparkline" viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none">' +
+      '<line x1="0" y1="'+loY+'" x2="'+w+'" y2="'+loY+'" stroke="rgba(232,84,107,.25)" stroke-width="1" stroke-dasharray="2,2"/>' +
+      '<line x1="0" y1="'+hiY+'" x2="'+w+'" y2="'+hiY+'" stroke="rgba(232,169,77,.25)" stroke-width="1" stroke-dasharray="2,2"/>' +
+      '<polyline points="'+pts+'" fill="none" stroke="#4B5563" stroke-width="1.2"/>' +
+      dots +
+    '</svg>';
+  }
+
+  function renderWeekBanner(){
+    var weekAgo = Date.now() - 7*24*60*60*1000;
+    var recent = state.journal.filter(function(e){ return new Date(e.ts).getTime() >= weekAgo; });
+    var withG = recent.filter(function(e){ return e.glucoseAfter !== null && e.glucoseAfter !== undefined; });
+    var hypoCount = withG.filter(function(e){ return glucoseZone(e.glucoseAfter)==='low'; }).length;
+    var pct = withG.length ? Math.round(hypoCount/withG.length*100) : 0;
+    var avg = withG.length ? withG.reduce(function(s,e){ return s+e.glucoseAfter; },0)/withG.length : null;
+    weekBannerEl.innerHTML =
+      '<span><strong class="mono">' + recent.length + '</strong> записів за 7 днів</span>' +
+      '<span><strong class="mono' + (pct>15?' hypo':'') + '">' + pct + '%</strong> гіпо (з відомим результатом)</span>' +
+      '<span>сер. цукор після їжі: <strong class="mono">' + (avg!==null?fmt(avg,1):'—') + '</strong></span>';
+  }
+
+  function renderJournalStats(){
+    var html = '';
+    ['breakfast','lunch','dinner'].forEach(function(meal){
+      var entries = state.journal.filter(function(e){ return e.meal === meal; });
+      var withG = entries.filter(function(e){ return e.glucoseAfter !== null && e.glucoseAfter !== undefined; });
+      var recentWithG = withG.slice(0, 14).slice().reverse();
+      var avgDose = entries.length ? entries.reduce(function(s,e){ return s+e.units; },0)/entries.length : 0;
+      var hypoCount = withG.filter(function(e){ return glucoseZone(e.glucoseAfter)==='low'; }).length;
+      html += '<div class="panel stat-card">' +
+        '<h3>' + mealLabels[meal] + ' <span class="count mono">' + entries.length + ' зап.</span></h3>' +
+        '<div class="stat-numbers">' +
+          '<div class="stat-item"><span class="num mono">' + fmt(avgDose,1) + '</span><span class="lbl">сер. доза</span></div>' +
+          '<div class="stat-item"><span class="num mono' + (hypoCount>0?' hypo':'') + '">' + hypoCount + '</span><span class="lbl">гіпо</span></div>' +
+        '</div>' +
+        buildSparklineSvg(recentWithG.map(function(e){ return e.glucoseAfter; }), state.targetRange) +
+      '</div>';
+    });
+    journalStatsEl.innerHTML = html;
+  }
+
+  function renderEntryCard(e){
+    var pending = e.glucoseAfter === null || e.glucoseAfter === undefined;
+    var foodsSummary = e.items.length ?
+      (e.items.slice(0,2).map(function(i){ return escapeHtml(i.name); }).join(', ') + (e.items.length>2 ? ' +' + (e.items.length-2) + ' інше' : '')) :
+      'без продуктів';
+    var zone = glucoseZone(e.glucoseAfter);
+    var glucosePart = '';
+    if (e.glucoseBefore !== null && e.glucoseBefore !== undefined) glucosePart += 'до: ' + e.glucoseBefore + ' ммоль/л';
+    if (!pending){
+      if (glucosePart) glucosePart += ' → ';
+      glucosePart += '<span class="glucose-dot ' + zone + '"></span>' + e.glucoseAfter + ' ммоль/л після';
+    }
+    return '<div class="entry-card' + (pending?' entry-pending':'') + '" data-id="' + e.id + '">' +
+      '<div class="entry-meta">' +
+        '<span class="entry-time">' + formatEntryTime(e.ts) + '</span>' +
+        '<span class="entry-meal-badge">' + mealLabels[e.meal] + '</span>' +
+      '</div>' +
+      '<div class="entry-foods">' + foodsSummary + '</div>' +
+      '<div class="entry-figures">' +
+        '<span>' + fmt(e.totalCarbs,1) + ' г вуглеводів</span>' +
+        '<span><strong>' + e.units + '</strong> Од введено</span>' +
+        (glucosePart ? '<span>' + glucosePart + '</span>' : '') +
+      '</div>' +
+      (e.note ? '<div class="entry-note">' + escapeHtml(e.note) + '</div>' : '') +
+      '<div class="entry-actions">' +
+        '<button data-action="repeat">Повторити</button>' +
+        (pending ? '<button data-action="followup">Додати результат</button>' : '') +
+        '<button data-action="delete" class="danger-hover">Видалити</button>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function renderJournalEntries(){
+    var filtered = journalFilter ? state.journal.filter(function(e){ return e.meal === journalFilter; }) : state.journal;
+    if (filtered.length === 0){
+      journalEntriesEl.innerHTML = '<p class="empty-hint">Записів ще немає — збережи перший розрахунок з калькулятора кнопкою «Зберегти в журнал».</p>';
+      return;
+    }
+    journalEntriesEl.innerHTML = filtered.map(renderEntryCard).join('');
+  }
+
+  function renderJournal(){
+    renderWeekBanner();
+    renderJournalStats();
+    renderJournalFilterChips();
+    renderJournalEntries();
+  }
+
+  function exportJson(){
+    var blob = new Blob([JSON.stringify(state.journal, null, 2)], {type:'application/json'});
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'insulin_journal.json';
+    a.click();
+  }
+  function csvCell(v){
+    var s = String(v === null || v === undefined ? '' : v);
+    s = s.replace(/"/g,'""');
+    return /[",\n]/.test(s) ? ('"'+s+'"') : s;
+  }
+  function exportCsv(){
+    var rows = [['Дата','Прийом їжі','Продукти','Вуглеводи(г)','Коефіцієнт','Доза(Од)','Цукор до(ммоль/л)','Цукор після(ммоль/л)','Нотатка']];
+    state.journal.forEach(function(e){
+      rows.push([
+        formatEntryTime(e.ts), mealLabels[e.meal],
+        e.items.map(function(i){ return i.name+' '+i.weight+'г'; }).join('; '),
+        fmt(e.totalCarbs,1), e.ratio, e.units,
+        e.glucoseBefore===null||e.glucoseBefore===undefined?'':e.glucoseBefore,
+        e.glucoseAfter===null||e.glucoseAfter===undefined?'':e.glucoseAfter,
+        e.note||''
+      ]);
+    });
+    var csv = rows.map(function(r){ return r.map(csvCell).join(','); }).join('\r\n');
+    var blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'insulin_journal.csv';
+    a.click();
+  }
+  exportJsonBtn.addEventListener('click', exportJson);
+  exportCsvBtn.addEventListener('click', exportCsv);
+
+  // ============================================================
+  // Fasting log
+  // ============================================================
+  addFastingBtn.addEventListener('click', function(){
+    fastingGlucoseEl.value = '';
+    fastingNoteEl.value = '';
+    openOverlay(fastingOverlay);
+    fastingGlucoseEl.focus();
+  });
+  closeFasting.addEventListener('click', function(){ closeOverlayEl(fastingOverlay); });
+  function confirmFasting(){
+    var g = parseFloat(fastingGlucoseEl.value);
+    if (isNaN(g) || g <= 0){ fastingGlucoseEl.focus(); return; }
+    state.fastingLog.unshift({ id: uid(), ts: new Date().toISOString(), glucose: g, note: fastingNoteEl.value.trim() });
+    closeOverlayEl(fastingOverlay);
+    renderFasting();
+  }
+  confirmFastingBtn.addEventListener('click', confirmFasting);
+  [fastingGlucoseEl, fastingNoteEl].forEach(function(el){
+    el.addEventListener('keydown', function(e){ if (e.key === 'Enter') confirmFasting(); });
+  });
+
+  function deleteFastingEntry(id){
+    var idx = state.fastingLog.findIndex(function(e){ return e.id === id; });
+    if (idx === -1) return;
+    var entry = state.fastingLog[idx];
+    state.fastingLog.splice(idx,1);
+    renderFasting();
+    scheduleUndo('Вимір натще видалено', function(){ state.fastingLog.splice(idx,0,entry); renderFasting(); });
+  }
+  function renderFastingCard(e){
+    var zone = fastingZone(e.glucose);
+    return '<div class="entry-card" data-id="' + e.id + '">' +
+      '<div class="entry-meta"><span class="entry-time">' + formatEntryTime(e.ts) + '</span></div>' +
+      '<div class="entry-figures"><span><span class="glucose-dot ' + zone + '"></span>' + e.glucose + ' ммоль/л</span></div>' +
+      (e.note ? '<div class="entry-note">' + escapeHtml(e.note) + '</div>' : '') +
+      '<div class="entry-actions"><button data-action="delete-fasting" class="danger-hover">Видалити</button></div>' +
+    '</div>';
+  }
+  fastingEntriesEl.addEventListener('click', function(ev){
+    var card = ev.target.closest('.entry-card');
+    if (!card) return;
+    if (ev.target.closest('[data-action="delete-fasting"]')) deleteFastingEntry(card.getAttribute('data-id'));
+  });
+  function renderFasting(){
+    var recent14 = state.fastingLog.slice(0,14);
+    var avg = recent14.length ? recent14.reduce(function(s,e){ return s+e.glucose; },0)/recent14.length : null;
+    fastingAvgEl.textContent = avg!==null ? fmt(avg,1) : '—';
+    fastingLowCountEl.textContent = recent14.filter(function(e){ return fastingZone(e.glucose)==='low'; }).length;
+    fastingHighCountEl.textContent = recent14.filter(function(e){ return fastingZone(e.glucose)==='high'; }).length;
+    fastingSparklineEl.innerHTML = buildSparklineSvg(recent14.slice().reverse().map(function(e){ return e.glucose; }), state.fastingRange);
+    if (state.fastingLog.length === 0){
+      fastingEntriesEl.innerHTML = '<p class="empty-hint">Записів ще немає — додай перший ранковий вимір.</p>';
+      return;
+    }
+    fastingEntriesEl.innerHTML = state.fastingLog.map(renderFastingCard).join('');
+  }
+
+  // ---- persistence: File System Access API, with download/upload fallback ----
+  function flashStatus(msg, kind){
+    saveStatusEl.textContent = msg;
+    saveStatusEl.classList.remove('ok','err');
+    if (kind) saveStatusEl.classList.add(kind);
+    setTimeout(function(){
+      saveStatusEl.textContent = 'Зберігає коефіцієнти, журнал, натще й улюблені — усе в один файл';
+      saveStatusEl.classList.remove('ok','err');
+    }, 3000);
+  }
+
+  function buildPayload(){
+    return {
+      customFoods: state.customFoods,
+      favorites: state.favorites,
+      ratios: state.ratios,
+      roundingStep: state.roundingStep,
+      tdd: state.tdd,
+      targetRange: state.targetRange,
+      fastingRange: state.fastingRange,
+      journal: state.journal,
+      fastingLog: state.fastingLog
+    };
+  }
+
+  function applyLoadedData(data){
+    if (data.customFoods) state.customFoods = data.customFoods;
+    if (Array.isArray(data.favorites)) state.favorites = data.favorites;
+    if (data.ratios) state.ratios = Object.assign({}, state.ratios, data.ratios);
+    if (typeof data.roundingStep === 'number') state.roundingStep = data.roundingStep;
+    if (typeof data.tdd === 'number') state.tdd = data.tdd;
+    if (data.targetRange) state.targetRange = Object.assign({}, state.targetRange, data.targetRange);
+    if (data.fastingRange) state.fastingRange = Object.assign({}, state.fastingRange, data.fastingRange);
+    if (Array.isArray(data.journal)) state.journal = data.journal;
+    if (Array.isArray(data.fastingLog)) state.fastingLog = data.fastingLog;
+    syncSettingsInputs();
+    renderCategoryChips();
+    renderFoodList();
+    renderFavorites();
+    updateMealTabLabels();
+    renderTotals();
+    updatePendingBadge();
+    if (journalViewEl.style.display !== 'none') renderJournal();
+    if (fastingViewEl.style.display !== 'none') renderFasting();
+  }
+
+  async function saveData(){
+    var payload = buildPayload();
+    try{
+      if (window.showSaveFilePicker){
+        if (!fileHandle){
+          fileHandle = await window.showSaveFilePicker({
+            suggestedName:'insulin_calc_data.json',
+            types:[{description:'JSON', accept:{'application/json':['.json']}}]
+          });
+        }
+        var writable = await fileHandle.createWritable();
+        await writable.write(JSON.stringify(payload, null, 2));
+        await writable.close();
+        flashStatus('Збережено ✓', 'ok');
+      } else {
+        var blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'insulin_calc_data.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        flashStatus('Файл завантажено ✓', 'ok');
+      }
+    } catch(err){
+      if (err && err.name !== 'AbortError') flashStatus('Помилка збереження', 'err');
+    }
+  }
+
+  async function loadData(){
+    try{
+      if (window.showOpenFilePicker){
+        var handles = await window.showOpenFilePicker({
+          types:[{description:'JSON', accept:{'application/json':['.json']}}]
+        });
+        fileHandle = handles[0];
+        var file = await fileHandle.getFile();
+        var text = await file.text();
+        applyLoadedData(JSON.parse(text));
+        flashStatus('Завантажено ✓', 'ok');
+      } else {
+        fileInputFallback.click();
+      }
+    } catch(err){
+      if (err && err.name !== 'AbortError') flashStatus('Помилка завантаження', 'err');
+    }
+  }
+
+  fileInputFallback.addEventListener('change', function(e){
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(){
+      try{ applyLoadedData(JSON.parse(reader.result)); flashStatus('Завантажено ✓', 'ok'); }
+      catch(err){ flashStatus('Помилка формату файлу', 'err'); }
+    };
+    reader.readAsText(file);
+  });
+
+  saveDataBtn.addEventListener('click', saveData);
+  loadDataBtn.addEventListener('click', loadData);
+
+  // ---- PWA service worker ----
+  if ('serviceWorker' in navigator){
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('sw.js').catch(function(){});
+    });
+  }
+
+  // ---- init ----
+  renderTicks();
+  renderCategoryChips();
+  renderFoodList();
+  renderMealItems();
+  renderFavorites();
+  updateMealTabLabels();
+  renderTotals();
+  updatePendingBadge();
+})();
+</script>
 </body>
 </html>

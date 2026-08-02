@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Glucose Intelligence — Вхід</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@300;500;600;700&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+</head>
+<body>
+
+<div class="auth-wrap">
+  <div class="auth-card">
+    <p class="auth-eyebrow">Glucose Intelligence</p>
+    <h1 class="auth-title" id="authTitle">Вхід</h1>
+
+    <div class="auth-error" id="authError"></div>
+    <div class="auth-success" id="authSuccess"></div>
+
+    <div class="role-toggle" id="roleToggle" style="display:none;">
+      <button type="button" class="role-btn active" data-role="patient">
+        <span class="role-icon">🧑</span>Пацієнт
+      </button>
+      <button type="button" class="role-btn" data-role="doctor">
+        <span class="role-icon">🩺</span>Лікар
+      </button>
+    </div>
+
+    <form id="authForm">
+      <div class="auth-field" id="nameField" style="display:none;">
+        <label for="fullName">Ім'я</label>
+        <input type="text" id="fullName" class="auth-input" placeholder="Ваше ім'я" autocomplete="name">
+      </div>
+      <div class="auth-field">
+        <label for="email">Email</label>
+        <input type="email" id="email" class="auth-input" placeholder="you@example.com" autocomplete="email" required>
+      </div>
+      <div class="auth-field">
+        <label for="password">Пароль</label>
+        <input type="password" id="password" class="auth-input" placeholder="Мінімум 6 символів" autocomplete="current-password" required minlength="6">
+      </div>
+      <button type="submit" class="auth-submit" id="submitBtn">Увійти</button>
+    </form>
+
+    <p class="auth-switch" id="switchModeText">
+      Ще немає акаунта? <a id="switchModeLink">Зареєструватись</a>
+    </p>
+  </div>
+</div>
+
+<script src="js/supabase-client.js"></script>
+<script src="js/auth.js"></script>
+</body>
+</html>

@@ -14,7 +14,11 @@
 
 <div class="top-bar">
   <div class="top-bar-brand">Glucose Intelligence<span class="role-pill">Пацієнт</span></div>
-  <button class="logout-btn" id="logoutBtn" type="button">Вийти</button>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span class="card-note" id="syncStatus"></span>
+    <button class="logout-btn" id="syncBtn" type="button" title="Дозберегти дані, якщо частина не збереглась через ліміти">🔄 Синхронізувати</button>
+    <button class="logout-btn" id="logoutBtn" type="button">Вийти</button>
+  </div>
 </div>
 
 <div class="app" style="padding-top:0;">

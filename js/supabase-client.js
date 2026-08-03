@@ -34,22 +34,47 @@ async function sbGetProfile(userId){
 
 /* ---------- Readings ---------- */
 async function sbLoadReadings(patientId){
-  const { data, error } = await sb.from('readings')
-    .select('t,mgdl,dev')
-    .eq('patient_id', patientId)
-    .order('t', { ascending: true });
-  if(error) throw error;
-  return data.map(r => ({ t: Number(r.t), mgdl: r.mgdl, mmol: mgdlToMmol(r.mgdl), dev: r.dev }));
+  const PAGE = 1000; // PostgREST повертає максимум ~1000 рядків за раз без явної пагінації
+  let all = [];
+  let from = 0;
+  while(true){
+    const { data, error } = await sb.from('readings')
+      .select('t,mgdl,dev')
+      .eq('patient_id', patientId)
+      .order('t', { ascending: true })
+      .range(from, from + PAGE - 1);
+    if(error) throw error;
+    all = all.concat(data);
+    if(data.length < PAGE) break; // остання сторінка
+    from += PAGE;
+  }
+  return all.map(r => ({ t: Number(r.t), mgdl: r.mgdl, mmol: mgdlToMmol(r.mgdl), dev: r.dev }));
 }
 
-// upsert in chunks to avoid overly large single requests
-async function sbSaveReadings(patientId, readings){
-  const CHUNK = 500;
+// upsert чанками, з паузою та повторними спробами при збоях (напр. рейт-ліміт)
+async function sbSaveReadings(patientId, readings, onProgress){
+  const CHUNK = 300;
   const rows = readings.map(r => ({ patient_id: patientId, t: r.t, mgdl: r.mgdl, dev: r.dev || null }));
-  for(let i=0; i<rows.length; i+=CHUNK){
+  const totalChunks = Math.ceil(rows.length / CHUNK);
+  const failedRanges = [];
+
+  for(let i=0, chunkIdx=0; i<rows.length; i+=CHUNK, chunkIdx++){
     const chunk = rows.slice(i, i+CHUNK);
-    const { error } = await sb.from('readings').upsert(chunk, { onConflict: 'patient_id,t,dev' });
-    if(error) throw error;
+    let ok = false, lastErr = null;
+    for(let attempt=0; attempt<5 && !ok; attempt++){
+      if(attempt>0) await new Promise(res=>setTimeout(res, 700 * Math.pow(2, attempt-1))); // експоненційна пауза
+      const { error } = await sb.from('readings').upsert(chunk, { onConflict: 'patient_id,t,dev' });
+      if(!error){ ok = true; } else { lastErr = error; }
+    }
+    if(!ok) failedRanges.push({ from: i, to: i+chunk.length, error: lastErr && lastErr.message });
+    if(onProgress) onProgress(chunkIdx+1, totalChunks);
+    if(i+CHUNK < rows.length) await new Promise(res=>setTimeout(res, 150)); // пауза між пакетами, щоб не впертись у ліміт знову
+  }
+
+  if(failedRanges.length > 0){
+    const err = new Error(`Збережено частково: ${totalChunks - failedRanges.length} із ${totalChunks} пакетів. Натисніть "Синхронізувати" пізніше, щоб дозберегти решту.`);
+    err.failedRanges = failedRanges;
+    throw err;
   }
 }
 

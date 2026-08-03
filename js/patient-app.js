@@ -27,7 +27,11 @@
       await sbSaveDeviceColor(CURRENT_USER.id, dev, colorKey);
     };
     ON_SAVE_READINGS = async (newReadings) => {
-      await sbSaveReadings(CURRENT_USER.id, newReadings);
+      const status = document.getElementById('syncStatus');
+      await sbSaveReadings(CURRENT_USER.id, newReadings, (done, total)=>{
+        if(status) status.textContent = `Збереження… ${done}/${total}`;
+      });
+      if(status){ status.textContent = '✓ Збережено'; setTimeout(()=>{ status.textContent=''; }, 3000); }
     };
 
     try{
@@ -164,6 +168,25 @@
     }catch(e){
       errEl.textContent = e.message;
       errEl.classList.add('show');
+    }
+  });
+
+  document.getElementById('syncBtn').addEventListener('click', async ()=>{
+    const btn = document.getElementById('syncBtn');
+    const status = document.getElementById('syncStatus');
+    if(FULL_HISTORY.length === 0){ status.textContent = 'Немає даних для синхронізації'; return; }
+    btn.disabled = true;
+    try{
+      await sbSaveReadings(CURRENT_USER.id, FULL_HISTORY, (done, total)=>{
+        status.textContent = `Синхронізація… ${done}/${total}`;
+      });
+      status.textContent = '✓ Все синхронізовано';
+      setTimeout(()=>{ status.textContent=''; }, 4000);
+    }catch(e){
+      status.textContent = '';
+      alert(e.message);
+    }finally{
+      btn.disabled = false;
     }
   });
 

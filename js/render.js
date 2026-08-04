@@ -243,15 +243,16 @@ function renderLifespanBadge(){
   const devReadings = FULL_HISTORY.filter(r=>r.dev===dev);
   if(!devReadings.length){ wrap.style.display='none'; return; }
   const insertionT = devReadings[0].t;
-  const expiryT = insertionT + SENSOR_LIFESPAN_DAYS*86400000;
-  const remaining = expiryT - nowAsDeviceEpoch();
+  const lifespanMs = SENSOR_LIFESPAN_DAYS*86400000;
+  const elapsed = nowAsDeviceEpoch() - insertionT;
   wrap.style.display = 'inline-flex';
-  if(remaining > 0){
-    badge.textContent = `⏳ ${formatDurationUk(remaining)} до заміни`;
-    wrap.classList.remove('expired');
+  wrap.classList.remove('expired');
+  if(elapsed < lifespanMs){
+    badge.textContent = `⏳ ${formatDurationUk(lifespanMs - elapsed)} до заміни`;
   } else {
-    badge.textContent = `⚠ сенсор прострочено на ${formatDurationUk(-remaining)}`;
-    wrap.classList.add('expired');
+    const cycleNum = Math.floor(elapsed / lifespanMs) + 1;
+    const intoCycle = elapsed % lifespanMs;
+    badge.textContent = `🔄 Сенсор перезапущено (цикл ${cycleNum}) · ${formatDurationUk(lifespanMs - intoCycle)} до заміни`;
   }
 }
 

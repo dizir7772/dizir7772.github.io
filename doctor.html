@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@300;500;600;700&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="stylesheet" href="css/style.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
@@ -103,8 +104,9 @@
     <div class="card-head">
       <h3 class="card-title">Добові профілі</h3>
       <span class="card-note" id="dailyNote">по днях</span>
+      <button class="collapse-btn" data-target="dailyStrip" type="button">▾</button>
     </div>
-    <div class="daily-strip" id="dailyStrip"></div>
+    <div class="daily-strip collapsible-body" id="dailyStrip"></div>
   </section>
 
   <div class="card" id="comparisonCard" style="display:none;">
@@ -139,7 +141,7 @@
     <div class="insight-grid collapsible-body" id="insightGrid"></div>
   </section>
 
-  <section class="card">
+  <section class="card" id="anomaliesCard">
     <div class="card-head">
       <h3 class="card-title">Якість даних сенсора</h3>
       <span class="card-note">автоматична перевірка на артефакти</span>
@@ -185,6 +187,9 @@
   <div class="foot">
     <span>Конвертація мг/дл → ммоль/л: значення ÷ 18.0182</span>
     <span id="genFooter">—</span>
+  </div>
+  <div class="foot" style="justify-content:center;margin-top:6px;">
+    <span>© 2026 Glucose Intelligence · <a href="https://t.me/dizir7772" target="_blank" rel="noopener" style="color:var(--gold-bright);">t.me/dizir7772</a></span>
   </div>
 
 </div>

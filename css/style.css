@@ -486,7 +486,7 @@ body.readonly-mode .edit-only{display:none !important;}
   .collapsible-body{max-height:none !important;opacity:1 !important;transition:none !important;}
   .collapse-btn{display:none !important;}
   .upload-btn, .print-btn, .period-badge .dot-live, .drop-zone, #dropZone,
-  .tools-row, .table-foot, #tableCard, .hero, #fileInput, .reset-history-btn, #pngBtn, .modal-overlay, .sensor-tabs, .color-picker-wrap, .lifespan-badge{
+  .tools-row, .table-foot, #tableCard, .hero, #fileInput, .reset-history-btn, #pngBtn, .modal-overlay, .sensor-tabs, .color-picker-wrap, .lifespan-badge, #doctorsCard, #anomaliesCard{
     display:none !important;
   }
   .app{max-width:100%;padding:0;}

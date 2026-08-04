@@ -110,7 +110,7 @@ async function sbInviteDoctor(patientId, doctorEmail){
 }
 async function sbListMyDoctors(patientId){
   const { data, error } = await sb.from('doctor_access')
-    .select('id, doctor_id, status, profiles!doctor_access_doctor_id_fkey(email, full_name)')
+    .select('id, doctor_id, status, profiles!doctor_id(email, full_name)')
     .eq('patient_id', patientId).eq('status','accepted');
   if(error) throw error;
   return data;
@@ -121,7 +121,7 @@ async function sbRevokeDoctor(accessId){
 }
 async function sbListMyPatients(doctorId){
   const { data, error } = await sb.from('doctor_access')
-    .select('id, patient_id, profiles!doctor_access_patient_id_fkey(email, full_name)')
+    .select('id, patient_id, profiles!patient_id(email, full_name)')
     .eq('doctor_id', doctorId).eq('status','accepted');
   if(error) throw error;
   return data;

@@ -1,332 +1,388 @@
 <!DOCTYPE html>
-<html lang="uk" class="light">
+<html lang="uk">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Glucose Intelligence</title>
-    <!-- Tailwind CSS -->
+    <title>Glucose Intelligence Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
     
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🩸</text></svg>">
-
     <script>
         tailwind.config = {
-            darkMode: 'class',
             theme: {
                 extend: {
-                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Lora', 'serif'],
+                    },
                     colors: {
-                        brand: { 50: '#f0fdfa', 100: '#ccfbf1', 400: '#2dd4bf', 500: '#14b8a6', 600: '#0d9488', 900: '#134e4a' },
-                        darkbg: '#0f172a',
-                        darkcard: '#1e293b'
+                        app: {
+                            bg: '#0f1219',
+                            card: '#181d26',
+                            border: '#2a313c',
+                            textMain: '#e2e8f0',
+                            textMuted: '#8b9bb4',
+                            accent: '#facc15',
+                            green: '#2dd4bf',
+                            red: '#f43f5e',
+                            orange: '#fb923c',
+                            yellow: '#fbbf24',
+                            pink: '#ec4899'
+                        }
                     }
                 }
             }
         }
     </script>
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .glass-card {
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+        body { background-color: #0f1219; color: #e2e8f0; font-family: 'Inter', sans-serif; }
+        .card { background-color: #181d26; border: 1px solid #2a313c; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .font-serif { font-family: 'Lora', serif; }
+        
+        .circular-chart { display: block; margin: 0 auto; max-width: 80%; max-height: 250px; }
+        .circle-bg { fill: none; stroke: #2a313c; stroke-width: 2.5; }
+        .circle { fill: none; stroke-width: 2.5; stroke-linecap: round; transition: stroke-dasharray 1s ease-out; }
+        
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #0f1219; }
+        ::-webkit-scrollbar-thumb { background: #2a313c; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3f495a; }
+
+        .modal-enter { animation: modalFadeIn 0.3s ease-out forwards; }
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.95) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
         }
-        .dark .glass-card {
-            background: rgba(30, 41, 59, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
-        }
-        .tir-segment { transition: width 1s ease-in-out; }
     </style>
 </head>
-<body class="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-slate-900 dark:to-indigo-950 text-slate-800 dark:text-slate-200 min-h-screen transition-colors duration-300">
+<body class="min-h-screen p-4 md:p-8">
 
-    <!-- Header -->
-    <nav class="glass-card sticky top-0 z-50 px-6 py-4 mb-6 rounded-b-3xl">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-brand-500 to-indigo-500 flex items-center justify-center text-white shadow-lg">
-                    <i class="fa-solid fa-droplet text-lg"></i>
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 bg-[#0f1219] z-50 flex flex-col items-center justify-center transition-opacity duration-500">
+        <div class="w-12 h-12 border-4 border-app-border border-t-app-green rounded-full animate-spin mb-4"></div>
+        <div id="loading-text" class="text-app-textMuted font-medium">Синхронізація з базою даних...</div>
+    </div>
+
+    <main class="max-w-7xl mx-auto space-y-6">
+        <!-- Top Section -->
+        <div class="card p-6 md:p-8 flex flex-col md:flex-row gap-8 items-center md:items-stretch">
+            <div class="relative w-48 h-48 flex-shrink-0">
+                <svg viewBox="0 0 36 36" class="circular-chart w-full h-full drop-shadow-[0_0_15px_rgba(45,212,191,0.3)]">
+                    <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    <path id="live-gauge-ring" class="circle stroke-app-green" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                </svg>
+                <div class="absolute inset-0 flex flex-col items-center justify-center mt-2">
+                    <span id="current-glucose" class="text-5xl font-bold text-white tracking-tight">--</span>
+                    <span class="text-xs text-app-textMuted mt-1">ммоль/л</span>
+                    <div class="mt-2 bg-[#2a313c] px-3 py-1 rounded-full text-xs text-white flex items-center gap-1 border border-[#3f495a]">
+                        <span id="current-arrow">→</span> <span id="current-trend-text">стабільно</span>
+                    </div>
                 </div>
+                <div id="last-update-text" class="absolute -bottom-6 left-0 right-0 text-center text-[10px] text-app-textMuted">Останнє вимірювання: --</div>
+            </div>
+
+            <div class="flex-grow flex flex-col justify-between py-2 w-full">
                 <div>
-                    <h1 class="text-xl font-bold tracking-tight text-slate-800 dark:text-white">Glucose Intelligence</h1>
-                    <div id="connection-status" class="flex items-center gap-1.5 mt-0.5">
-                        <div class="relative flex h-2.5 w-2.5">
-                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-slate-400 opacity-75"></span>
-                            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-slate-500"></span>
-                        </div>
-                        <span class="text-xs font-medium text-slate-500 dark:text-slate-400">Підключення...</span>
-                    </div>
-                </div>
-            </div>
-            
-            <button id="theme-toggle" class="p-2.5 rounded-full bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-700 transition-all shadow-sm">
-                <i id="theme-icon" class="fa-solid fa-moon text-slate-600 dark:text-slate-300"></i>
-            </button>
-        </div>
-    </nav>
-
-    <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 pb-12 sm:px-6">
-        
-        <!-- Top row: Main Value & Alerts -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <!-- Current Value Card -->
-            <div class="glass-card rounded-3xl p-6 col-span-1 flex flex-col justify-center items-center relative overflow-hidden">
-                <div class="absolute top-0 left-0 w-full h-1 bg-brand-500"></div>
-                <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Останній вимір</h2>
-                <div class="flex items-baseline gap-3">
-                    <span id="current-glucose" class="text-7xl font-bold text-slate-800 dark:text-white tracking-tighter">--</span>
-                    <div class="flex flex-col">
-                        <span class="text-xl font-medium text-slate-500">ммоль/л</span>
-                        <span id="trend-arrow" class="text-3xl text-brand-500 mt-1 font-bold">→</span>
-                    </div>
-                </div>
-                <div class="mt-4 px-4 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-sm font-medium text-slate-600 dark:text-slate-300 flex items-center gap-2">
-                    <i class="fa-regular fa-clock"></i> <span id="last-update-time">Очікування даних...</span>
-                </div>
-            </div>
-
-            <!-- Metrics Grid -->
-            <div class="col-span-1 md:col-span-2 grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <!-- Average -->
-                <div class="glass-card rounded-2xl p-5 flex flex-col justify-between">
-                    <div class="flex justify-between items-start">
-                        <span class="text-xs font-semibold text-slate-500 uppercase">Середній</span>
-                    </div>
-                    <div class="mt-2">
-                        <span id="metric-avg" class="text-3xl font-bold">--</span> <span class="text-sm text-slate-500">ммоль</span>
-                    </div>
-                    <div class="text-xs text-slate-400 mt-1">Ціль: &lt; 8.6</div>
+                    <h1 class="text-2xl md:text-3xl font-serif text-app-green font-medium mb-3">У цільовому діапазоні</h1>
+                    <p id="summary-text" class="text-app-textMuted text-sm leading-relaxed max-w-3xl">
+                        Завантаження історії спостереження...
+                    </p>
                 </div>
                 
-                <!-- GMI -->
-                <div class="glass-card rounded-2xl p-5 flex flex-col justify-between">
-                    <div class="flex justify-between items-start">
-                        <span class="text-xs font-semibold text-slate-500 uppercase" title="Glucose Management Indicator (Орієнтовний HbA1c)">GMI</span>
+                <div class="mt-8">
+                    <div class="flex justify-between items-end mb-2">
+                        <div class="text-[10px] uppercase tracking-widest text-app-textMuted font-semibold">Останні 3 години</div>
+                        <div id="status-badge" class="text-[10px] text-app-green flex items-center gap-1">
+                            <span class="w-2 h-2 rounded-full bg-app-green animate-pulse"></span> Онлайн
+                        </div>
                     </div>
-                    <div class="mt-2">
-                        <span id="metric-gmi" class="text-3xl font-bold">--</span> <span class="text-sm text-slate-500">%</span>
+                    <div class="h-16 w-full relative bg-[#0f1219] rounded overflow-hidden">
+                        <canvas id="miniSparklineChart"></canvas>
                     </div>
-                    <div class="text-xs text-slate-400 mt-1">Ціль: &lt; 7.0%</div>
-                </div>
-
-                <!-- CV (Variability) -->
-                <div class="glass-card rounded-2xl p-5 flex flex-col justify-between">
-                    <div class="flex justify-between items-start">
-                        <span class="text-xs font-semibold text-slate-500 uppercase" title="Коефіцієнт варіабельності">Варіаб. (CV)</span>
-                    </div>
-                    <div class="mt-2">
-                        <span id="metric-cv" class="text-3xl font-bold">--</span> <span class="text-sm text-slate-500">%</span>
-                    </div>
-                    <div id="cv-target" class="text-xs text-emerald-500 mt-1 font-medium">Ціль: &lt; 36%</div>
-                </div>
-
-                <!-- Count -->
-                <div class="glass-card rounded-2xl p-5 flex flex-col justify-between">
-                    <div class="flex justify-between items-start">
-                        <span class="text-xs font-semibold text-slate-500 uppercase">Точок даних</span>
-                    </div>
-                    <div class="mt-2">
-                        <span id="metric-count" class="text-3xl font-bold">0</span>
-                    </div>
-                    <div class="text-xs text-slate-400 mt-1">У базі</div>
                 </div>
             </div>
         </div>
 
-        <!-- Time In Range (TIR) -->
-        <div class="glass-card rounded-3xl p-6 mb-6">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-bold">Час у діапазонах (TIR)</h3>
+        <!-- Metrics Row -->
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div class="card p-5">
+                <div class="text-xs text-app-textMuted mb-3">Середній рівень глюкози</div>
+                <div class="flex items-baseline gap-1">
+                    <span id="card-avg" class="text-3xl font-bold text-white">--</span>
+                    <span class="text-xs text-app-textMuted">ммоль/л</span>
+                </div>
+                <div class="text-[10px] text-app-green mt-2 flex items-center gap-1">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> ціль <8.5
+                </div>
             </div>
-            
-            <!-- Stacked Bar -->
-            <div class="w-full h-8 flex rounded-xl overflow-hidden mb-3 shadow-inner bg-slate-100 dark:bg-slate-800">
-                <div id="tir-very-low" class="tir-segment bg-red-500 flex items-center justify-center text-[10px] text-white font-bold" style="width: 0%"></div>
-                <div id="tir-low" class="tir-segment bg-orange-400 flex items-center justify-center text-[10px] text-white font-bold" style="width: 0%"></div>
-                <div id="tir-target" class="tir-segment bg-emerald-500 flex items-center justify-center text-[10px] text-white font-bold" style="width: 0%"></div>
-                <div id="tir-high" class="tir-segment bg-yellow-400 flex items-center justify-center text-[10px] text-yellow-900 font-bold" style="width: 0%"></div>
-                <div id="tir-very-high" class="tir-segment bg-orange-600 flex items-center justify-center text-[10px] text-white font-bold" style="width: 0%"></div>
+            <div class="card p-5">
+                <div class="text-xs text-app-textMuted mb-3">GMI (індикатор керування)</div>
+                <div class="flex items-baseline gap-1">
+                    <span id="card-gmi" class="text-3xl font-bold text-white">--</span>
+                    <span class="text-xs text-app-textMuted">%</span>
+                </div>
+                <div class="text-[10px] text-app-green mt-2 flex items-center gap-1">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> ціль <7%
+                </div>
             </div>
-            
-            <!-- Legend -->
-            <div class="grid grid-cols-5 text-center text-xs font-medium text-slate-600 dark:text-slate-400">
-                <div><div class="w-3 h-3 rounded-full bg-red-500 mx-auto mb-1"></div>&lt; 3.0</div>
-                <div><div class="w-3 h-3 rounded-full bg-orange-400 mx-auto mb-1"></div>3.0 - 3.8</div>
-                <div><div class="w-3 h-3 rounded-full bg-emerald-500 mx-auto mb-1"></div>3.9 - 10.0</div>
-                <div><div class="w-3 h-3 rounded-full bg-yellow-400 mx-auto mb-1"></div>10.1 - 13.9</div>
-                <div><div class="w-3 h-3 rounded-full bg-orange-600 mx-auto mb-1"></div>&gt; 13.9</div>
+            <div class="card p-5">
+                <div class="text-xs text-app-textMuted mb-3">Варіабельність (CV)</div>
+                <div class="flex items-baseline gap-1">
+                    <span id="card-cv" class="text-3xl font-bold text-white">--</span>
+                    <span class="text-xs text-app-textMuted">%</span>
+                </div>
+                <div id="cv-status" class="text-[10px] mt-2 flex items-center gap-1 text-app-green">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> ціль ≤36%
+                </div>
+            </div>
+            <div class="card p-5">
+                <div class="text-xs text-app-textMuted mb-3">Час у цільовому діапазоні</div>
+                <div class="flex items-baseline gap-1">
+                    <span id="card-tir" class="text-3xl font-bold text-white">--</span>
+                    <span class="text-xs text-app-textMuted">%</span>
+                </div>
+                <div id="tir-status" class="text-[10px] mt-2 flex items-center gap-1 text-app-green">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> ціль >70%
+                </div>
+            </div>
+            <div class="card p-5 col-span-2 md:col-span-1">
+                <div class="text-xs text-app-textMuted mb-3">GRI (індекс ризику)</div>
+                <div class="flex items-baseline gap-1">
+                    <span id="card-gri" class="text-3xl font-bold text-white">--</span>
+                    <span class="text-xs text-app-textMuted">/100</span>
+                </div>
+                <div id="gri-status" class="text-[10px] mt-2 text-app-textMuted">
+                    Оцінка ризику...
+                </div>
             </div>
         </div>
 
-        <!-- Charts Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- TIR Bar Row -->
+        <div class="card p-6 md:p-8">
+            <div class="flex justify-between items-end mb-6">
+                <h2 class="text-xl font-serif font-medium text-white">Час у діапазонах</h2>
+                <span class="text-[10px] text-app-textMuted uppercase tracking-wider">за весь період спостереження</span>
+            </div>
             
-            <!-- Live Trend Chart -->
-            <div class="glass-card rounded-3xl p-6 shadow-sm">
-                <h3 class="text-lg font-bold mb-4 flex justify-between items-center">
-                    Останні тенденції
-                    <span class="flex h-3 w-3 relative">
-                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-                    </span>
-                </h3>
-                <div class="h-64 relative w-full">
-                    <canvas id="liveChart"></canvas>
+            <div class="w-full h-10 flex rounded-lg overflow-hidden mb-5 bg-[#0f1219]">
+                <div id="bar-vlow" class="bg-app-pink h-full transition-all duration-1000 flex items-center justify-center text-[10px] font-bold text-white overflow-hidden" style="width: 0%"></div>
+                <div id="bar-low" class="bg-app-red h-full transition-all duration-1000 flex items-center justify-center text-[10px] font-bold text-white overflow-hidden" style="width: 0%"></div>
+                <div id="bar-target" class="bg-app-green h-full transition-all duration-1000 flex items-center justify-center text-[10px] font-bold text-[#0f1219] overflow-hidden" style="width: 0%"></div>
+                <div id="bar-high" class="bg-app-yellow h-full transition-all duration-1000 flex items-center justify-center text-[10px] font-bold text-[#0f1219] overflow-hidden" style="width: 0%"></div>
+                <div id="bar-vhigh" class="bg-app-orange h-full transition-all duration-1000 flex items-center justify-center text-[10px] font-bold text-white overflow-hidden" style="width: 0%"></div>
+            </div>
+            
+            <div class="flex flex-wrap justify-between text-xs text-app-textMuted gap-2">
+                <div class="flex items-center gap-1.5"><div class="w-2.5 h-2.5 rounded-full bg-app-pink"></div> Дуже низький (<3.0): <strong id="lbl-vlow" class="text-white ml-1">0%</strong></div>
+                <div class="flex items-center gap-1.5"><div class="w-2.5 h-2.5 rounded-full bg-app-red"></div> Низький (3.0-3.9): <strong id="lbl-low" class="text-white ml-1">0%</strong></div>
+                <div class="flex items-center gap-1.5"><div class="w-2.5 h-2.5 rounded-full bg-app-green"></div> Ціль (3.9-10.0): <strong id="lbl-target" class="text-white ml-1">0%</strong></div>
+                <div class="flex items-center gap-1.5"><div class="w-2.5 h-2.5 rounded-full bg-app-yellow"></div> Високий (10.0-13.9): <strong id="lbl-high" class="text-white ml-1">0%</strong></div>
+                <div class="flex items-center gap-1.5"><div class="w-2.5 h-2.5 rounded-full bg-app-orange"></div> Дуже високий (>13.9): <strong id="lbl-vhigh" class="text-white ml-1">0%</strong></div>
+            </div>
+        </div>
+
+        <!-- AGP Chart -->
+        <div class="card p-6 md:p-8">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-serif font-medium text-white flex items-center gap-2">
+                    Амбулаторний профіль глюкози (AGP)
+                    <span class="text-app-textMuted cursor-help" title="Відображає медіану та відхилення за всі дні в один 24-годинний графік">ⓘ</span>
+                </h2>
+                <div class="flex items-center gap-4">
+                    <span class="text-[10px] text-app-textMuted uppercase tracking-wider hidden sm:block">медіана, 25-75% та 5-95% перцентилі за добовим часом</span>
                 </div>
             </div>
-
-            <!-- Daily Profiles Chart -->
-            <div class="glass-card rounded-3xl p-6 shadow-sm">
-                <h3 class="text-lg font-bold mb-4">Останні 3 дні</h3>
-                <div class="h-64 relative w-full">
-                    <canvas id="dailyChart"></canvas>
-                </div>
+            <div class="h-80 w-full relative">
+                <canvas id="agpChart"></canvas>
             </div>
+        </div>
 
-            <!-- AGP Chart (Full Width) -->
-            <div class="glass-card rounded-3xl p-6 shadow-sm col-span-1 lg:col-span-2">
-                <h3 class="text-lg font-bold mb-4">Амбулаторний профіль (Медіана по годинах)</h3>
-                <div class="h-72 relative w-full">
-                    <canvas id="agpChart"></canvas>
-                </div>
+        <!-- Daily Profiles Grid -->
+        <div class="card p-6 md:p-8">
+            <div class="flex justify-between items-end mb-6">
+                <h2 class="text-xl font-serif font-medium text-white">Добові профілі</h2>
+                <span id="daily-count-label" class="text-[10px] text-app-textMuted uppercase tracking-wider">0 календарних днів · клікніть на день для деталей</span>
+            </div>
+            
+            <div id="daily-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-7 gap-4">
+                <!-- Картки генеруватимуться динамічно -->
             </div>
         </div>
     </main>
 
+    <!-- Day Detail Modal -->
+    <div id="day-modal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm modal-bg-close"></div>
+        
+        <!-- Modal Content -->
+        <div class="card bg-app-card w-full max-w-4xl relative z-10 modal-enter border border-app-border shadow-2xl flex flex-col max-h-[90vh]">
+            <div class="p-6 border-b border-app-border flex justify-between items-start">
+                <div>
+                    <h3 id="modal-date-title" class="text-2xl font-serif font-medium text-white mb-1">Пн, 20.07.2026</h3>
+                    <p id="modal-readings-count" class="text-xs text-app-textMuted">480 вимірів за цей день</p>
+                </div>
+                <button class="modal-bg-close w-8 h-8 rounded-full bg-[#2a313c] hover:bg-[#3f495a] text-white flex items-center justify-center transition-colors">
+                    ✕
+                </button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-[#0f1219] rounded-xl p-4 border border-[#2a313c]">
+                        <div class="text-[10px] text-app-textMuted uppercase tracking-wider mb-1">Середнє</div>
+                        <div id="modal-stat-avg" class="text-2xl font-bold text-white">--</div>
+                    </div>
+                    <div class="bg-[#0f1219] rounded-xl p-4 border border-[#2a313c]">
+                        <div class="text-[10px] text-app-textMuted uppercase tracking-wider mb-1">Мінімум</div>
+                        <div id="modal-stat-min" class="text-2xl font-bold text-app-red">--</div>
+                    </div>
+                    <div class="bg-[#0f1219] rounded-xl p-4 border border-[#2a313c]">
+                        <div class="text-[10px] text-app-textMuted uppercase tracking-wider mb-1">Максимум</div>
+                        <div id="modal-stat-max" class="text-2xl font-bold text-app-orange">--</div>
+                    </div>
+                    <div class="bg-[#0f1219] rounded-xl p-4 border border-[#2a313c]">
+                        <div class="text-[10px] text-app-textMuted uppercase tracking-wider mb-1">У цільовому діапазоні</div>
+                        <div id="modal-stat-tir" class="text-2xl font-bold text-app-green">--%</div>
+                    </div>
+                </div>
+
+                <div class="h-[400px] w-full relative bg-[#0f1219] rounded-xl border border-[#2a313c] overflow-hidden">
+                    <canvas id="modalDetailedChart" class="relative z-10"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/+esm';
 
-        // ==========================================
-        // 1. НАЛАШТУВАННЯ ТЕМИ
-        // ==========================================
-        const themeToggleBtn = document.getElementById('theme-toggle');
-        const themeIcon = document.getElementById('theme-icon');
-        const htmlElement = document.documentElement;
-        let chartsReady = false;
+        const supabaseUrl = 'https://kstyyoyepyammjvdqyex.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtzdHl5b3llcHlhbW1qdmRxeWV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYzNTMxMzIsImV4cCI6MjEwMTkyOTEzMn0.6wYrofQ6CXSBmrbrgrliSzLbTUjw7whKpOd2zO4u1Sg';
+        const supabase = createClient(supabaseUrl, supabaseKey);
 
-        function setTheme(isDark) {
-            if (isDark) {
-                htmlElement.classList.add('dark');
-                themeIcon.classList.replace('fa-moon', 'fa-sun');
-                localStorage.setItem('color-theme', 'dark');
-            } else {
-                htmlElement.classList.remove('dark');
-                themeIcon.classList.replace('fa-sun', 'fa-moon');
-                localStorage.setItem('color-theme', 'light');
-            }
-            if (chartsReady) updateChartsTheme();
-        }
-
-        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            setTheme(true);
-        }
-
-        themeToggleBtn.addEventListener('click', () => {
-            setTheme(!htmlElement.classList.contains('dark'));
-        });
-
-        // ==========================================
-        // 2. ІНІЦІАЛІЗАЦІЯ ГРАФІКІВ (Chart.js)
-        // ==========================================
         Chart.defaults.font.family = "'Inter', sans-serif";
-        Chart.defaults.color = '#64748b';
-        Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(15, 23, 42, 0.9)';
+        Chart.defaults.color = '#8b9bb4';
+        Chart.defaults.scale.grid.color = 'rgba(42, 49, 60, 0.5)';
 
-        const liveCtx = document.getElementById('liveChart').getContext('2d');
-        const dailyCtx = document.getElementById('dailyChart').getContext('2d');
-        const agpCtx = document.getElementById('agpChart').getContext('2d');
+        let miniSparkline, agpChart, modalChart;
+        let globalDailyData = new Map();
 
-        // Live Chart
-        const liveChart = new Chart(liveCtx, {
-            type: 'line',
-            data: { labels: [], datasets: [{ label: 'Глюкоза (ммоль/л)', data: [], borderColor: '#14b8a6', backgroundColor: 'rgba(20, 184, 166, 0.1)', borderWidth: 3, pointRadius: 2, fill: true, tension: 0.4, spanGaps: true }] },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: { y: { min: 2, max: 18, grid: { color: 'rgba(0,0,0,0.05)' } }, x: { grid: { display: false } } }
+        // Плагін для точної математичної заливки цільових зон на графіку
+        const targetBackgroundPlugin = {
+            id: 'targetBackground',
+            beforeDraw: (chart) => {
+                if (chart.config.options.plugins.targetBackground?.enabled) {
+                    const ctx = chart.ctx;
+                    const yAxis = chart.scales.y;
+                    const xAxis = chart.scales.x;
+                    
+                    const topY = yAxis.getPixelForValue(10);
+                    const bottomY = yAxis.getPixelForValue(3.9);
+                    
+                    ctx.save();
+                    
+                    // Зелена заливка (Цільовий діапазон)
+                    ctx.fillStyle = 'rgba(45, 212, 191, 0.05)';
+                    ctx.fillRect(xAxis.left, topY, xAxis.width, bottomY - topY);
+
+                    // Червона заливка (Низький цукор)
+                    ctx.fillStyle = 'rgba(244, 63, 94, 0.05)';
+                    ctx.fillRect(xAxis.left, bottomY, xAxis.width, Math.max(0, yAxis.bottom - bottomY));
+
+                    // Жовта лінія
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.strokeStyle = 'rgba(250, 204, 21, 0.4)';
+                    ctx.setLineDash([4, 4]);
+                    ctx.moveTo(xAxis.left, topY);
+                    ctx.lineTo(xAxis.right, topY);
+                    ctx.stroke();
+
+                    // Червона лінія
+                    ctx.beginPath();
+                    ctx.strokeStyle = 'rgba(244, 63, 94, 0.4)';
+                    ctx.moveTo(xAxis.left, bottomY);
+                    ctx.lineTo(xAxis.right, bottomY);
+                    ctx.stroke();
+                    
+                    ctx.restore();
+                }
             }
-        });
+        };
+        Chart.register(targetBackgroundPlugin);
 
-        // Daily Profiles Chart
-        const dailyChart = new Chart(dailyCtx, {
-            type: 'line',
-            data: {
-                labels: Array.from({length: 24}, (_, i) => `${i}:00`),
-                datasets: [
-                    { label: 'День 1', data: [], borderColor: '#6366f1', borderWidth: 3, tension: 0.4, pointRadius: 2, spanGaps: true },
-                    { label: 'День 2', data: [], borderColor: '#cbd5e1', borderWidth: 2, borderDash: [5, 5], tension: 0.4, pointRadius: 2, spanGaps: true },
-                    { label: 'День 3', data: [], borderColor: '#f1f5f9', borderWidth: 2, borderDash: [2, 2], tension: 0.4, pointRadius: 2, spanGaps: true }
-                ]
-            },
-            options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 2, max: 15 } }, interaction: { mode: 'index', intersect: false } }
-        });
+        function initCharts() {
+            // 1. Міні-графік (Останні 3 години)
+            const ctxMini = document.getElementById('miniSparklineChart').getContext('2d');
+            miniSparkline = new Chart(ctxMini, {
+                type: 'line',
+                data: { labels: [], datasets: [{ data: [], borderColor: '#facc15', borderWidth: 2, pointRadius: 0, tension: 0.4, spanGaps: true }] },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: { enabled: false }, targetBackground: { enabled: true } },
+                    scales: { x: { display: false }, y: { display: false, min: 2, max: 15 } },
+                    layout: { padding: 0 }
+                }
+            });
 
-        // AGP Chart (Оновлено: Процентильні хвилі)
-        const agpChart = new Chart(agpCtx, {
-            type: 'line',
-            data: {
-                labels: Array.from({length: 24}, (_, i) => `${i}:00`),
-                datasets: [
-                    { id: 'p95', label: '95%', data: [], borderColor: 'transparent', backgroundColor: 'transparent', pointRadius: 0, tension: 0.4, fill: false }, // 0
-                    { id: 'p05', label: '5-95%', data: [], borderColor: 'transparent', backgroundColor: 'rgba(20, 184, 166, 0.1)', pointRadius: 0, tension: 0.4, fill: 0 }, // 1 (заливає до 0)
-                    { id: 'p75', label: '75%', data: [], borderColor: 'transparent', backgroundColor: 'transparent', pointRadius: 0, tension: 0.4, fill: false }, // 2
-                    { id: 'p25', label: '25-75%', data: [], borderColor: 'transparent', backgroundColor: 'rgba(20, 184, 166, 0.3)', pointRadius: 0, tension: 0.4, fill: 2 }, // 3 (заливає до 2)
-                    { id: 'median', label: 'Медіана', data: [], borderColor: '#14b8a6', borderWidth: 3, tension: 0.4, pointRadius: 0, fill: false, zIndex: 10 }, // 4 (центральна)
-                    { label: 'Верхня межа (10.0)', data: Array(24).fill(10), borderColor: 'rgba(234, 179, 8, 0.5)', borderWidth: 1, borderDash: [5, 5], pointRadius: 0, fill: false, tension: 0 }, // 5
-                    { label: 'Нижня межа (3.9)', data: Array(24).fill(3.9), borderColor: 'rgba(239, 68, 68, 0.5)', borderWidth: 1, borderDash: [5, 5], pointRadius: 0, fill: false, tension: 0 } // 6
-                ]
-            },
-            options: { 
-                responsive: true, maintainAspectRatio: false, 
-                plugins: { 
-                    legend: { display: false },
-                    tooltip: {
-                        mode: 'index', intersect: false,
-                        filter: (item) => [1, 3, 4].includes(item.datasetIndex), // Показуємо тільки головні діапазони
-                        callbacks: {
-                            label: function(context) {
-                                if (context.datasetIndex === 4) return `Медіана: ${context.parsed.y.toFixed(1)}`;
-                                if (context.datasetIndex === 3) return `25-75%: ${context.chart.data.datasets[3].data[context.dataIndex]?.toFixed(1)} - ${context.chart.data.datasets[2].data[context.dataIndex]?.toFixed(1)}`;
-                                if (context.datasetIndex === 1) return `5-95%: ${context.chart.data.datasets[1].data[context.dataIndex]?.toFixed(1)} - ${context.chart.data.datasets[0].data[context.dataIndex]?.toFixed(1)}`;
-                                return null;
+            // 2. AGP Графік (Преміум хвилі)
+            const ctxAGP = document.getElementById('agpChart').getContext('2d');
+            agpChart = new Chart(ctxAGP, {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: 24}, (_, i) => `${i.toString().padStart(2, '0')}:00`),
+                    datasets: [
+                        { id: 'p95', data: [], borderColor: 'transparent', backgroundColor: 'transparent', pointRadius: 0, fill: false, tension: 0.4, spanGaps: true },
+                        { id: 'p05', data: [], borderColor: 'transparent', backgroundColor: 'rgba(45, 212, 191, 0.05)', pointRadius: 0, fill: 0, tension: 0.4, spanGaps: true },
+                        { id: 'p75', data: [], borderColor: 'transparent', backgroundColor: 'transparent', pointRadius: 0, fill: false, tension: 0.4, spanGaps: true },
+                        { id: 'p25', data: [], borderColor: 'transparent', backgroundColor: 'rgba(45, 212, 191, 0.15)', pointRadius: 0, fill: 2, tension: 0.4, spanGaps: true },
+                        { id: 'median', data: [], borderColor: '#facc15', borderWidth: 3, pointRadius: 0, fill: false, tension: 0.4, zIndex: 10, spanGaps: true },
+                        { data: Array(24).fill(10), borderColor: 'rgba(250, 204, 21, 0.3)', borderWidth: 1, borderDash: [5, 5], pointRadius: 0, fill: false, tension: 0 },
+                        { data: Array(24).fill(3.9), borderColor: 'rgba(250, 204, 21, 0.3)', borderWidth: 1, borderDash: [5, 5], pointRadius: 0, fill: false, tension: 0 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            mode: 'index', intersect: false, backgroundColor: 'rgba(15, 18, 25, 0.9)', titleColor: '#e2e8f0', bodyColor: '#e2e8f0', borderColor: '#2a313c', borderWidth: 1,
+                            filter: (item) => [1, 3, 4].includes(item.datasetIndex),
+                            callbacks: {
+                                label: function(ctx) {
+                                    if (ctx.datasetIndex === 4) return `Медіана: ${ctx.parsed.y.toFixed(1)}`;
+                                    if (ctx.datasetIndex === 3) return `25-75%: ${ctx.chart.data.datasets[3].data[ctx.dataIndex]?.toFixed(1)} - ${ctx.chart.data.datasets[2].data[ctx.dataIndex]?.toFixed(1)}`;
+                                    if (ctx.datasetIndex === 1) return `5-95%: ${ctx.chart.data.datasets[1].data[ctx.dataIndex]?.toFixed(1)} - ${ctx.chart.data.datasets[0].data[ctx.dataIndex]?.toFixed(1)}`;
+                                    return null;
+                                }
                             }
                         }
+                    },
+                    scales: {
+                        y: { min: 2, max: 15, border: {display: false} },
+                        x: { border: {display: false}, grid: { display: false }, ticks: { maxTicksLimit: 8 } }
                     }
-                }, 
-                scales: { y: { min: 2, max: 16, title: { display: true, text: 'ммоль/л' } }, x: { ticks: { maxTicksLimit: 8 } } } 
-            }
-        });
+                }
+            });
 
-        chartsReady = true;
-        updateChartsTheme();
-
-        function updateChartsTheme() {
-            const isDark = htmlElement.classList.contains('dark');
-            const gridColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)';
-            const textColor = isDark ? '#94a3b8' : '#64748b';
-            
-            [liveChart, dailyChart, agpChart].forEach(chart => {
-                if(chart.options.scales.x) { chart.options.scales.x.grid.color = gridColor; chart.options.scales.x.ticks.color = textColor; }
-                if(chart.options.scales.y) { chart.options.scales.y.grid.color = gridColor; chart.options.scales.y.ticks.color = textColor; }
-                if(chart.options.plugins?.legend?.labels) { chart.options.plugins.legend.labels.color = textColor; }
-                chart.update('none');
+            // 3. Детальний графік у модальному вікні
+            const ctxModal = document.getElementById('modalDetailedChart').getContext('2d');
+            modalChart = new Chart(ctxModal, {
+                type: 'line',
+                data: { labels: [], datasets: [{ data: [], borderColor: '#facc15', borderWidth: 2, pointRadius: 3, pointBackgroundColor: [], tension: 0.2, spanGaps: true }] },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, targetBackground: { enabled: true } },
+                    scales: { y: { min: 2, max: 15, border: {display: false} }, x: { border: {display: false}, ticks: { maxTicksLimit: 8 } } },
+                    layout: { padding: 0 }
+                }
             });
         }
 
-        // Допоміжна функція для розрахунку процентилів (хвиль AGP)
         function getPercentile(arr, p) {
             if (arr.length === 0) return null;
-            if (arr.length === 1) return arr[0];
             const sorted = [...arr].sort((a, b) => a - b);
             const index = (p / 100) * (sorted.length - 1);
             const lower = Math.floor(index);
@@ -336,209 +392,275 @@
             return sorted[lower] * (1 - weight) + sorted[upper] * weight;
         }
 
-        // ==========================================
-        // 3. ПІДКЛЮЧЕННЯ ДО SUPABASE ТА АНАЛІТИКА
-        // ==========================================
-        const supabaseUrl = 'https://kstyyoyepyammjvdqyex.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtzdHl5b3llcHlhbW1qdmRxeWV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYzNTMxMzIsImV4cCI6MjEwMTkyOTEzMn0.6wYrofQ6CXSBmrbrgrliSzLbTUjw7whKpOd2zO4u1Sg';
-        
-        const supabase = createClient(supabaseUrl, supabaseKey);
-        const statusEl = document.getElementById('connection-status');
-
-        function updateMainUI(mmol, direction, timestamp) {
-            const valEl = document.getElementById('current-glucose');
-            const arrowEl = document.getElementById('trend-arrow');
-            const timeEl = document.getElementById('last-update-time');
+        // Швидкий генератор SVG для карток
+        function generateSVGSparkline(values) {
+            if (!values || values.length === 0) return '';
+            const minV = 3.0, maxV = 13.0, range = maxV - minV;
+            const w = 100, h = 40;
             
-            valEl.innerText = mmol.toFixed(1);
+            let pathD = "";
+            values.forEach((v, i) => {
+                const x = (i / (values.length - 1)) * w;
+                let clampedV = Math.min(Math.max(v, minV), maxV); 
+                const y = h - ((clampedV - minV) / range) * h;
+                pathD += (i === 0 ? `M ${x} ${y} ` : `L ${x} ${y} `);
+            });
 
-            valEl.className = 'text-7xl font-bold tracking-tighter transition-colors duration-500 ';
-            if (mmol < 3.9) valEl.classList.add('text-red-500');
-            else if (mmol > 10.0) valEl.classList.add('text-yellow-500');
-            else valEl.classList.add('text-emerald-500');
-
-            const arrows = { 'DoubleUp': '⇈', 'SingleUp': '↑', 'FortyFiveUp': '↗', 'Flat': '→', 'FortyFiveDown': '↘', 'SingleDown': '↓', 'DoubleDown': '⇊' };
-            arrowEl.innerText = arrows[direction] || '→';
-            
-            const d = new Date(timestamp);
-            timeEl.innerText = `${d.getDate().toString().padStart(2, '0')}.${(d.getMonth()+1).toString().padStart(2, '0')} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+            return `
+                <svg viewBox="0 0 100 40" class="w-full h-full overflow-visible" preserveAspectRatio="none">
+                    <line x1="0" y1="20" x2="100" y2="20" stroke="#2dd4bf" stroke-width="0.5" stroke-dasharray="2,2" opacity="0.5"/>
+                    <path d="${pathD}" fill="none" stroke="#facc15" stroke-width="1.5" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/>
+                </svg>`;
         }
+
+        const modal = document.getElementById('day-modal');
+        document.querySelectorAll('.modal-bg-close').forEach(el => el.addEventListener('click', () => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }));
+        
+        window.openDayDetails = function(dateStr) {
+            const data = globalDailyData.get(dateStr);
+            if(!data) return;
+
+            const dObj = new Date(dateStr);
+            const options = { weekday: 'short', year: 'numeric', month: '2-digit', day: '2-digit' };
+            document.getElementById('modal-date-title').innerText = dObj.toLocaleDateString('uk-UA', options).replace(',', '');
+            document.getElementById('modal-readings-count').innerText = `${data.raw.length} вимірів за цей день`;
+
+            let sum = 0, inRange = 0;
+            let minVal = 999, maxVal = 0;
+            
+            data.raw.forEach(v => {
+                sum += v.val;
+                if(v.val < minVal) minVal = v.val;
+                if(v.val > maxVal) maxVal = v.val;
+                if(v.val >= 3.9 && v.val <= 10.0) inRange++;
+            });
+            
+            const avg = sum / data.raw.length;
+            const tir = Math.round((inRange / data.raw.length) * 100);
+
+            document.getElementById('modal-stat-avg').innerText = avg.toFixed(1);
+            document.getElementById('modal-stat-min').innerText = minVal.toFixed(1);
+            document.getElementById('modal-stat-max').innerText = maxVal.toFixed(1);
+            document.getElementById('modal-stat-tir').innerText = `${tir}%`;
+
+            document.getElementById('modal-stat-tir').className = `text-2xl font-bold ${tir >= 70 ? 'text-app-green' : 'text-app-orange'}`;
+            document.getElementById('modal-stat-min').className = `text-2xl font-bold ${minVal < 3.9 ? 'text-app-red' : 'text-white'}`;
+            document.getElementById('modal-stat-max').className = `text-2xl font-bold ${maxVal > 10.0 ? 'text-app-orange' : 'text-white'}`;
+
+            const labels = data.raw.map(d => `${d.date.getHours().toString().padStart(2,'0')}:${d.date.getMinutes().toString().padStart(2,'0')}`);
+            const values = data.raw.map(d => d.val);
+            
+            // Розмальовуємо точки
+            const pointColors = values.map(v => (v === minVal || v === maxVal) ? '#f43f5e' : 'transparent');
+            const pointRadii = values.map(v => (v === minVal || v === maxVal) ? 5 : 0);
+
+            modalChart.data.labels = labels;
+            modalChart.data.datasets[0].data = values;
+            modalChart.data.datasets[0].pointBackgroundColor = pointColors;
+            modalChart.data.datasets[0].pointRadius = pointRadii;
+            modalChart.update();
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex'); // Центрування
+        };
 
         async function fetchHistoricalData() {
             try {
                 let allData = [];
                 let start = 0;
                 const step = 1000;
-                const maxPoints = 15000; // Оптимально для AGP (це кілька тижнів безперервних даних)
                 let hasMore = true;
 
-                statusEl.innerHTML = `<span class="text-slate-500">Синхронізація історії...</span>`;
-
-                // Цикл: завантажуємо по 1000 точок, поки не зберемо всі або не досягнемо ліміту
                 while (hasMore) {
                     const { data, error } = await supabase
                         .from('glucose_readings')
-                        .select('mmol, sgv, timestamp')
+                        .select('mmol, sgv, timestamp, direction')
                         .not('timestamp', 'is', null)
                         .order('timestamp', { ascending: false })
                         .range(start, start + step - 1);
                         
-                    if (error) {
-                        console.error(error);
-                        break;
-                    }
-
-                    if (data && data.length > 0) {
-                        allData.push(...data);
-                        start += step;
-                    }
-                    
-                    // Якщо база віддала менше 1000, значить ми дійшли до кінця таблиці
-                    if (!data || data.length < step || allData.length >= maxPoints) {
-                        hasMore = false;
-                    }
+                    if (error) break;
+                    if (data && data.length > 0) { allData.push(...data); start += step; }
+                    if (!data || data.length < step || allData.length >= 30000) hasMore = false;
                 }
 
-                const data = allData;
+                document.getElementById('loading-overlay').classList.add('opacity-0', 'pointer-events-none');
+                setTimeout(() => document.getElementById('loading-overlay').classList.add('hidden'), 500);
 
-                if (!data || data.length === 0) {
-                    statusEl.innerHTML = `<span class="text-amber-500">База даних порожня</span>`;
-                    return;
-                }
+                if (allData.length === 0) return;
+                document.getElementById('status-badge').innerHTML = `<span class="w-2 h-2 rounded-full bg-app-green animate-pulse"></span> Онлайн (${allData.length} точок)`;
 
-                // Фільтрація і перетворення дат
-                const validData = data.filter(d => (d.mmol || d.sgv) > 0).map(d => {
-                    return {
-                        val: d.mmol ? parseFloat(d.mmol) : (d.sgv / 18.0182),
-                        date: new Date(d.timestamp)
-                    };
-                }).filter(d => !isNaN(d.date.getTime()));
+                const validData = allData.map(d => ({
+                    val: d.mmol ? parseFloat(d.mmol) : (d.sgv / 18.0182),
+                    date: new Date(d.timestamp),
+                    dir: d.direction || 'Flat'
+                })).filter(d => !isNaN(d.date.getTime()) && d.val > 0);
 
                 if(validData.length === 0) return;
 
-                document.getElementById('metric-count').innerText = validData.length;
-
-                // --- 1. ОНОВЛЕННЯ ГОЛОВНОГО ЕКРАНУ (Найновіший запис) ---
-                updateMainUI(validData[0].val, 'Flat', validData[0].date);
-
-                // --- 2. МЕТРИКИ (AVG, GMI, CV) ---
-                let sum = 0;
-                validData.forEach(d => sum += d.val);
-                const avg = sum / validData.length;
-                document.getElementById('metric-avg').innerText = avg.toFixed(1);
+                // 1. ГОЛОВНА ПАНЕЛЬ
+                const last = validData[0];
+                const gaugeRing = document.getElementById('live-gauge-ring');
                 
+                document.getElementById('current-glucose').innerText = last.val.toFixed(1);
+                
+                let ringColor = '#2dd4bf'; let trendText = 'стабільно';
+                if(last.val < 3.9) { ringColor = '#f43f5e'; trendText = 'низько'; }
+                else if(last.val > 10.0) { ringColor = '#facc15'; trendText = 'високо'; }
+                gaugeRing.style.stroke = ringColor;
+                
+                const arrows = { 'DoubleUp':'⇈', 'SingleUp':'↑', 'FortyFiveUp':'↗', 'Flat':'→', 'FortyFiveDown':'↘', 'SingleDown':'↓', 'DoubleDown':'⇊' };
+                document.getElementById('current-arrow').innerText = arrows[last.dir] || '→';
+                document.getElementById('current-trend-text').innerText = trendText;
+                
+                document.getElementById('last-update-text').innerText = `Останнє вимірювання: ${last.date.toLocaleDateString('uk-UA', {day:'2-digit', month:'2-digit'})}, ${last.date.toLocaleTimeString('uk-UA', {hour:'2-digit', minute:'2-digit'})}`;
+
+                // 2. МЕТРИКИ
+                const firstDate = validData[validData.length-1].date;
+                const diffTime = Math.abs(last.date - firstDate);
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                const diffHours = Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+
+                let sum = 0, vl = 0, l = 0, t = 0, h = 0, vh = 0;
+                validData.forEach(d => {
+                    sum += d.val;
+                    if(d.val < 3.0) vl++; else if(d.val <= 3.8) l++; else if(d.val <= 10.0) t++; else if(d.val <= 13.9) h++; else vh++;
+                });
+                
+                const avg = sum / validData.length;
+                const tirPct = (t / validData.length) * 100;
                 const gmi = 3.31 + (0.02392 * (avg * 18.0182));
-                document.getElementById('metric-gmi').innerText = gmi.toFixed(1);
                 
                 let varianceSum = 0;
                 validData.forEach(d => varianceSum += Math.pow(d.val - avg, 2));
-                const sd = Math.sqrt(varianceSum / validData.length);
-                const cv = (sd / avg) * 100;
-                document.getElementById('metric-cv').innerText = cv.toFixed(1);
+                const cv = (Math.sqrt(varianceSum / validData.length) / avg) * 100;
 
-                // --- 3. ЧАС У ДІАПАЗОНАХ (TIR) ---
-                let vl=0, l=0, t=0, h=0, vh=0;
-                validData.forEach(d => {
-                    if(d.val < 3.0) vl++;
-                    else if(d.val <= 3.8) l++;
-                    else if(d.val <= 10.0) t++;
-                    else if(d.val <= 13.9) h++;
-                    else vh++;
-                });
-                const updateTIR = (id, count) => {
-                    let pct = Math.round((count / validData.length) * 100);
-                    document.getElementById(id).style.width = `${pct}%`;
-                    document.getElementById(id).innerText = pct >= 4 ? `${pct}%` : '';
+                const pVL = (vl / validData.length) * 100;
+                const pL = (l / validData.length) * 100;
+                const pH = (h / validData.length) * 100;
+                const pVH = (vh / validData.length) * 100;
+                const gri = (3.0 * pVL) + (2.4 * pL) + (1.6 * pVH) + (0.8 * pH);
+
+                document.getElementById('summary-text').innerHTML = `За <strong>${diffDays} днів ${diffHours} годин</strong> спостереження середній рівень глюкози становив <strong>${avg.toFixed(1)} ммоль/л</strong>, ${tirPct.toFixed(0)}% часу — у цільовому діапазоні 3.9–10.0 ммоль/л.`;
+
+                // Оновлюємо кільце, щоб воно показувало TIR
+                const pct = Math.min(Math.max(tirPct, 0), 100);
+                gaugeRing.style.strokeDasharray = `${pct}, 100`;
+
+                document.getElementById('card-avg').innerText = avg.toFixed(1);
+                document.getElementById('card-gmi').innerText = gmi.toFixed(1);
+                document.getElementById('card-cv').innerText = cv.toFixed(1);
+                document.getElementById('card-tir').innerText = tirPct.toFixed(1);
+                document.getElementById('card-gri').innerText = gri.toFixed(1);
+
+                if(cv > 36) document.getElementById('cv-status').className = "text-[10px] mt-2 flex items-center gap-1 text-app-red";
+                if(tirPct < 70) document.getElementById('tir-status').className = "text-[10px] mt-2 flex items-center gap-1 text-app-orange";
+                
+                let griText = "Оцінка..."; let griColor = "";
+                if(gri <= 36) { griText = "Низький ризик"; griColor = "text-app-green"; }
+                else if(gri <= 52) { griText = "Помірний ризик"; griColor = "text-app-yellow"; }
+                else { griText = "Високий ризик"; griColor = "text-app-red"; }
+                document.getElementById('gri-status').innerHTML = `<span class="${griColor}">${griText}</span>`;
+
+                // 3. TIR BAR (з текстом відсотків)
+                const setBar = (id, pct) => {
+                    const bar = document.getElementById(`bar-${id}`);
+                    bar.style.width = `${pct}%`;
+                    bar.innerText = pct > 4 ? `${Math.round(pct)}%` : ''; 
+                    document.getElementById(`lbl-${id}`).innerText = `${pct.toFixed(1)}%`;
                 };
-                updateTIR('tir-very-low', vl);
-                updateTIR('tir-low', l);
-                updateTIR('tir-target', t);
-                updateTIR('tir-high', h);
-                updateTIR('tir-very-high', vh);
+                setBar('vlow', pVL); setBar('low', pL); setBar('target', tirPct); setBar('high', pH); setBar('vhigh', pVH);
 
-                // --- 4. LIVE ГРАФІК ---
-                const recent = validData.slice(0, 100).reverse();
-                liveChart.data.labels = recent.map(d => `${d.date.getHours().toString().padStart(2,'0')}:${d.date.getMinutes().toString().padStart(2,'0')}`);
-                liveChart.data.datasets[0].data = recent.map(d => parseFloat(d.val.toFixed(1)));
-                liveChart.update();
+                // 4. ОСТАННІ 3 ГОДИНИ
+                const threeHoursAgo = last.date.getTime() - (3 * 60 * 60 * 1000);
+                const recentData = validData.filter(d => d.date.getTime() >= threeHoursAgo).reverse();
+                
+                miniSparkline.data.labels = recentData.map(d => d.date.getTime());
+                miniSparkline.data.datasets[0].data = recentData.map(d => d.val);
+                miniSparkline.update();
 
-                // --- 5. ДОБОВІ ТА AGP ---
+                // 5. AGP & ДОБОВІ
                 let hourlyData = Array.from({length: 24}, () => []);
-                const uniqueDaysMap = new Map();
+                globalDailyData.clear();
 
-                validData.forEach(d => {
+                validData.slice().reverse().forEach(d => {
                     let hour = d.date.getHours();
-                    hourlyData[hour].push(d.val); // Для AGP
+                    hourlyData[hour].push(d.val); 
                     
-                    // Групуємо по днях для добового графіка
-                    const dateStr = d.date.toISOString().split('T')[0];
-                    if (!uniqueDaysMap.has(dateStr)) {
-                         uniqueDaysMap.set(dateStr, Array(24).fill(null));
-                    }
-                    if (uniqueDaysMap.get(dateStr)[hour] === null) {
-                         uniqueDaysMap.get(dateStr)[hour] = d.val;
-                    }
+                    const dateStr = `${d.date.getFullYear()}-${String(d.date.getMonth()+1).padStart(2,'0')}-${String(d.date.getDate()).padStart(2,'0')}`;
+                    if (!globalDailyData.has(dateStr)) globalDailyData.set(dateStr, { raw: [], valuesForSparkline: [] });
+                    globalDailyData.get(dateStr).raw.push(d);
                 });
 
-                // AGP Хвилі (Процентилі)
-                let p95 = [], p75 = [], p50 = [], p25 = [], p05 = [];
+                let p95=[], p75=[], p50=[], p25=[], p05=[];
                 hourlyData.forEach(arr => {
-                    p95.push(getPercentile(arr, 95));
-                    p75.push(getPercentile(arr, 75));
-                    p50.push(getPercentile(arr, 50));
-                    p25.push(getPercentile(arr, 25));
-                    p05.push(getPercentile(arr, 5));
+                    p95.push(getPercentile(arr, 95)); p75.push(getPercentile(arr, 75)); p50.push(getPercentile(arr, 50));
+                    p25.push(getPercentile(arr, 25)); p05.push(getPercentile(arr, 5));
                 });
-
-                agpChart.data.datasets[0].data = p95;
-                agpChart.data.datasets[1].data = p05;
-                agpChart.data.datasets[2].data = p75;
-                agpChart.data.datasets[3].data = p25;
-                agpChart.data.datasets[4].data = p50; // Медіана
+                agpChart.data.datasets[0].data = p95; agpChart.data.datasets[1].data = p05; agpChart.data.datasets[2].data = p75;
+                agpChart.data.datasets[3].data = p25; agpChart.data.datasets[4].data = p50;
                 agpChart.update();
-                
-                // Динамічний Добовий графік (Останні 3 унікальні дні)
-                const sortedDays = Array.from(uniqueDaysMap.keys()).sort().reverse();
-                const dateOptions = { month: 'short', day: 'numeric' };
-                
-                if (sortedDays.length > 0) {
-                    dailyChart.data.datasets[0].label = new Date(sortedDays[0]).toLocaleDateString('uk-UA', dateOptions);
-                    dailyChart.data.datasets[0].data = uniqueDaysMap.get(sortedDays[0]);
-                }
-                if (sortedDays.length > 1) {
-                    dailyChart.data.datasets[1].label = new Date(sortedDays[1]).toLocaleDateString('uk-UA', dateOptions);
-                    dailyChart.data.datasets[1].data = uniqueDaysMap.get(sortedDays[1]);
-                }
-                if (sortedDays.length > 2) {
-                    dailyChart.data.datasets[2].label = new Date(sortedDays[2]).toLocaleDateString('uk-UA', dateOptions);
-                    dailyChart.data.datasets[2].data = uniqueDaysMap.get(sortedDays[2]);
-                }
-                dailyChart.update();
 
-                // Статус
-                statusEl.innerHTML = `
-                    <div class="relative flex h-2.5 w-2.5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span></div>
-                    <span class="text-xs font-semibold text-emerald-600 dark:text-emerald-400">Онлайн (${validData.length} точок)</span>`;
+                // 6. СІТКА КАРТОК
+                const gridContainer = document.getElementById('daily-grid');
+                gridContainer.innerHTML = '';
+                
+                const sortedDates = Array.from(globalDailyData.keys()).sort((a,b) => new Date(b) - new Date(a));
+                document.getElementById('daily-count-label').innerText = `${sortedDates.length} календарних днів · клікніть на день для деталей`;
+
+                const daysOfWeek = ['Нд', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+
+                sortedDates.forEach(dateStr => {
+                    const dayData = globalDailyData.get(dateStr);
+                    const step = Math.ceil(dayData.raw.length / 50);
+                    const sparkData = dayData.raw.filter((_, i) => i % step === 0).map(d => d.val);
                     
+                    let daySum = 0, dayTgt = 0;
+                    dayData.raw.forEach(v => { daySum += v.val; if(v.val>=3.9 && v.val<=10) dayTgt++; });
+                    const dayAvg = (daySum / dayData.raw.length).toFixed(1);
+                    const dayTir = Math.round((dayTgt / dayData.raw.length) * 100);
+                    
+                    const dObj = new Date(dateStr);
+                    const dayName = daysOfWeek[dObj.getDay()];
+                    const dayDate = `${String(dObj.getDate()).padStart(2,'0')}.${String(dObj.getMonth()+1).padStart(2,'0')}`;
+
+                    let badgeColor = dayTir >= 70 ? 'bg-app-green/20 text-app-green' : (dayTir >= 50 ? 'bg-app-yellow/20 text-app-yellow' : 'bg-app-red/20 text-app-red');
+
+                    const svgHtml = generateSVGSparkline(sparkData);
+
+                    const cardHtml = `
+                        <div class="bg-[#0f1219] rounded-xl p-3 border border-[#2a313c] hover:border-app-accent cursor-pointer transition-colors group flex flex-col h-28" onclick="openDayDetails('${dateStr}')">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="font-serif font-bold text-white group-hover:text-app-accent transition-colors">${dayName}</span>
+                                <span class="text-xs text-app-textMuted">${dayDate}</span>
+                            </div>
+                            <div class="flex-grow relative w-full overflow-hidden">
+                                ${svgHtml}
+                            </div>
+                            <div class="flex justify-between items-center mt-2">
+                                <span class="font-bold text-white">${dayAvg}</span>
+                                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded ${badgeColor}">${dayTir}%</span>
+                            </div>
+                        </div>
+                    `;
+                    gridContainer.innerHTML += cardHtml;
+                });
             } catch (err) {
-                console.error("Дашборда помилка:", err);
+                console.error("Помилка:", err);
             }
         }
-        
+
+        initCharts();
         fetchHistoricalData();
 
-        // Realtime
+        // WebSocket
         supabase.channel('glucose_updates')
-            .on(
-                'postgres_changes',
-                { event: 'INSERT', schema: 'public', table: 'glucose_readings' },
-                (payload) => {
-                    const row = payload.new;
-                    const mmolVal = row.mmol ? parseFloat(row.mmol) : (row.sgv / 18.0182); 
-                    const ts = row.timestamp || row.created_at;
-                    updateMainUI(mmolVal, row.direction || 'Flat', ts);
-                }
-            ).subscribe();
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'glucose_readings' }, () => {
+                fetchHistoricalData(); 
+            }).subscribe();
 
     </script>
 </body>

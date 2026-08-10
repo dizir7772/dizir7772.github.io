@@ -225,6 +225,7 @@
         const themeToggleBtn = document.getElementById('theme-toggle');
         const themeIcon = document.getElementById('theme-icon');
         const htmlElement = document.documentElement;
+        let chartsReady = false; // Прапорець готовності графіків
 
         function setTheme(isDark) {
             if (isDark) {
@@ -236,7 +237,8 @@
                 themeIcon.classList.replace('fa-sun', 'fa-moon');
                 localStorage.setItem('color-theme', 'light');
             }
-            updateChartsTheme();
+            // Перемальовуємо графіки лише тоді, коли вони вже існують
+            if (chartsReady) updateChartsTheme();
         }
 
         if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -355,6 +357,9 @@
             }
         });
 
+        chartsReady = true; // Сигналізуємо, що графіки успішно створені
+        updateChartsTheme(); // Застосовуємо тему до графіків вперше
+
         // Оновлення кольорів при зміні теми
         function updateChartsTheme() {
             const isDark = htmlElement.classList.contains('dark');
@@ -378,10 +383,7 @@
         // 3. ПІДКЛЮЧЕННЯ ДО SUPABASE ТА ЛОГІКА ДАНИХ
         // ==========================================
         
-        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        // УВАГА: ЗАМІНІТЬ ЦІ ЗНАЧЕННЯ НА ВАШІ З SUPABASE!
-        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        const supabaseUrl = 'https://kstyyoyepyammjvdqyex.supabase.co/rest/v1/';
+        const supabaseUrl = 'https://kstyyoyepyammjvdqyex.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtzdHl5b3llcHlhbW1qdmRxeWV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYzNTMxMzIsImV4cCI6MjEwMTkyOTEzMn0.6wYrofQ6CXSBmrbrgrliSzLbTUjw7whKpOd2zO4u1Sg';
         
         let supabase;

@@ -1,58 +1,525 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html lang="uk" class="light">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Glucose Intelligence — Вхід</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@300;500;600;700&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="stylesheet" href="css/style.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glucose Intelligence</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🩸</text></svg>">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: { 50: '#f0fdfa', 100: '#ccfbf1', 400: '#2dd4bf', 500: '#14b8a6', 600: '#0d9488', 900: '#134e4a' },
+                        darkbg: '#0f172a',
+                        darkcard: '#1e293b'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+        }
+        .dark .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+        }
+        /* Анімація пульсації для індикатора */
+        @keyframes pulse-soft {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.1); }
+        }
+        .animate-pulse-soft { animation: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        
+        /* TIR Bar Styles */
+        .tir-segment { transition: width 1s ease-in-out; }
+    </style>
 </head>
-<body>
+<body class="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-slate-900 dark:to-indigo-950 text-slate-800 dark:text-slate-200 min-h-screen transition-colors duration-300">
 
-<div class="auth-wrap">
-  <div class="auth-card">
-    <p class="auth-eyebrow">Glucose Intelligence</p>
-    <h1 class="auth-title" id="authTitle">Вхід</h1>
+    <!-- Header -->
+    <nav class="glass-card sticky top-0 z-50 px-6 py-4 mb-6 rounded-b-3xl">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-brand-500 to-indigo-500 flex items-center justify-center text-white shadow-lg">
+                    <i class="fa-solid fa-droplet text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight text-slate-800 dark:text-white">Glucose Intelligence</h1>
+                    <div id="connection-status" class="flex items-center gap-1.5 mt-0.5">
+                        <div class="relative flex h-2.5 w-2.5">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-slate-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-slate-500"></span>
+                        </div>
+                        <span class="text-xs font-medium text-slate-500 dark:text-slate-400">Підключення...</span>
+                    </div>
+                </div>
+            </div>
+            
+            <button id="theme-toggle" class="p-2.5 rounded-full bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-700 transition-all shadow-sm">
+                <i id="theme-icon" class="fa-solid fa-moon text-slate-600 dark:text-slate-300"></i>
+            </button>
+        </div>
+    </nav>
 
-    <div class="auth-error" id="authError"></div>
-    <div class="auth-success" id="authSuccess"></div>
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 pb-12 sm:px-6">
+        
+        <!-- Top row: Main Value & Alerts -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <!-- Current Value Card -->
+            <div class="glass-card rounded-3xl p-6 col-span-1 md:col-span-1 flex flex-col justify-center items-center relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-1 bg-brand-500"></div>
+                <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Поточний рівень</h2>
+                <div class="flex items-baseline gap-3">
+                    <span id="current-glucose" class="text-7xl font-bold text-slate-800 dark:text-white tracking-tighter">--</span>
+                    <div class="flex flex-col">
+                        <span class="text-xl font-medium text-slate-500">ммоль/л</span>
+                        <span id="trend-arrow" class="text-3xl text-brand-500 mt-1 font-bold">→</span>
+                    </div>
+                </div>
+                <div class="mt-4 px-4 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-sm font-medium text-slate-600 dark:text-slate-300 flex items-center gap-2">
+                    <i class="fa-regular fa-clock"></i> <span id="last-update-time">Очікування даних...</span>
+                </div>
+            </div>
 
-    <div class="role-toggle" id="roleToggle" style="display:none;">
-      <button type="button" class="role-btn active" data-role="patient">
-        <span class="role-icon">🧑</span>Пацієнт
-      </button>
-      <button type="button" class="role-btn" data-role="doctor">
-        <span class="role-icon">🩺</span>Лікар
-      </button>
-    </div>
+            <!-- Metrics Grid -->
+            <div class="col-span-1 md:col-span-2 grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Average -->
+                <div class="glass-card rounded-2xl p-5 flex flex-col justify-between">
+                    <div class="flex justify-between items-start">
+                        <span class="text-xs font-semibold text-slate-500 uppercase">Середній</span>
+                        <span class="text-[10px] bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300 px-2 py-0.5 rounded-full font-bold">3 міс</span>
+                    </div>
+                    <div class="mt-2">
+                        <span id="metric-avg" class="text-3xl font-bold">--</span> <span class="text-sm text-slate-500">ммоль</span>
+                    </div>
+                    <div class="text-xs text-slate-400 mt-1">Ціль: &lt; 8.6</div>
+                </div>
+                
+                <!-- GMI -->
+                <div class="glass-card rounded-2xl p-5 flex flex-col justify-between">
+                    <div class="flex justify-between items-start">
+                        <span class="text-xs font-semibold text-slate-500 uppercase" title="Glucose Management Indicator (Орієнтовний HbA1c)">GMI</span>
+                        <span class="text-[10px] bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300 px-2 py-0.5 rounded-full font-bold">3 міс</span>
+                    </div>
+                    <div class="mt-2">
+                        <span id="metric-gmi" class="text-3xl font-bold">--</span> <span class="text-sm text-slate-500">%</span>
+                    </div>
+                    <div class="text-xs text-slate-400 mt-1">Ціль: &lt; 7.0%</div>
+                </div>
 
-    <form id="authForm">
-      <div class="auth-field" id="nameField" style="display:none;">
-        <label for="fullName">Ім'я</label>
-        <input type="text" id="fullName" class="auth-input" placeholder="Ваше ім'я" autocomplete="name">
-      </div>
-      <div class="auth-field">
-        <label for="email">Email</label>
-        <input type="email" id="email" class="auth-input" placeholder="you@example.com" autocomplete="email" required>
-      </div>
-      <div class="auth-field">
-        <label for="password">Пароль</label>
-        <input type="password" id="password" class="auth-input" placeholder="Мінімум 6 символів" autocomplete="current-password" required minlength="6">
-      </div>
-      <button type="submit" class="auth-submit" id="submitBtn">Увійти</button>
-    </form>
+                <!-- CV (Variability) -->
+                <div class="glass-card rounded-2xl p-5 flex flex-col justify-between">
+                    <div class="flex justify-between items-start">
+                        <span class="text-xs font-semibold text-slate-500 uppercase" title="Коефіцієнт варіабельності">Варіаб. (CV)</span>
+                        <span class="text-[10px] bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300 px-2 py-0.5 rounded-full font-bold">3 міс</span>
+                    </div>
+                    <div class="mt-2">
+                        <span id="metric-cv" class="text-3xl font-bold">--</span> <span class="text-sm text-slate-500">%</span>
+                    </div>
+                    <div id="cv-target" class="text-xs text-emerald-500 mt-1 font-medium">Ціль: &lt; 36%</div>
+                </div>
 
-    <p class="auth-switch" id="switchModeText">
-      Ще немає акаунта? <a id="switchModeLink">Зареєструватись</a>
-    </p>
-  </div>
-</div>
+                <!-- GRI -->
+                <div class="glass-card rounded-2xl p-5 flex flex-col justify-between">
+                    <div class="flex justify-between items-start">
+                        <span class="text-xs font-semibold text-slate-500 uppercase" title="Glycemia Risk Index">GRI</span>
+                        <span class="text-[10px] bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300 px-2 py-0.5 rounded-full font-bold">3 міс</span>
+                    </div>
+                    <div class="mt-2">
+                        <span id="metric-gri" class="text-3xl font-bold">--</span> <span class="text-sm text-slate-500">балів</span>
+                    </div>
+                    <div class="text-xs text-slate-400 mt-1">Зона 1-2 (Оптимально)</div>
+                </div>
+            </div>
+        </div>
 
-<script src="js/supabase-client.js"></script>
-<script src="js/auth.js"></script>
+        <!-- Time In Range (TIR) -->
+        <div class="glass-card rounded-3xl p-6 mb-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold">Час у діапазонах (TIR)</h3>
+                <span class="text-xs bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded font-medium">Останні 14 днів</span>
+            </div>
+            
+            <!-- Stacked Bar -->
+            <div class="w-full h-8 flex rounded-xl overflow-hidden mb-3 shadow-inner">
+                <div id="tir-very-low" class="tir-segment bg-red-500 flex items-center justify-center text-[10px] text-white font-bold" style="width: 2%"></div>
+                <div id="tir-low" class="tir-segment bg-orange-400 flex items-center justify-center text-[10px] text-white font-bold" style="width: 4%"></div>
+                <div id="tir-target" class="tir-segment bg-emerald-500 flex items-center justify-center text-[10px] text-white font-bold" style="width: 72%">72%</div>
+                <div id="tir-high" class="tir-segment bg-yellow-400 flex items-center justify-center text-[10px] text-yellow-900 font-bold" style="width: 18%"></div>
+                <div id="tir-very-high" class="tir-segment bg-orange-600 flex items-center justify-center text-[10px] text-white font-bold" style="width: 4%"></div>
+            </div>
+            
+            <!-- Legend -->
+            <div class="grid grid-cols-5 text-center text-xs font-medium text-slate-600 dark:text-slate-400">
+                <div><div class="w-3 h-3 rounded-full bg-red-500 mx-auto mb-1"></div>&lt; 3.0</div>
+                <div><div class="w-3 h-3 rounded-full bg-orange-400 mx-auto mb-1"></div>3.0 - 3.8</div>
+                <div><div class="w-3 h-3 rounded-full bg-emerald-500 mx-auto mb-1"></div>3.9 - 10.0</div>
+                <div><div class="w-3 h-3 rounded-full bg-yellow-400 mx-auto mb-1"></div>10.1 - 13.9</div>
+                <div><div class="w-3 h-3 rounded-full bg-orange-600 mx-auto mb-1"></div>&gt; 13.9</div>
+            </div>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            <!-- Live Trend Chart -->
+            <div class="glass-card rounded-3xl p-6 shadow-sm">
+                <h3 class="text-lg font-bold mb-4 flex justify-between items-center">
+                    Тенденція (Live)
+                    <span class="flex h-3 w-3 relative">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                    </span>
+                </h3>
+                <div class="h-64 relative w-full">
+                    <canvas id="liveChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Daily Profiles Chart -->
+            <div class="glass-card rounded-3xl p-6 shadow-sm">
+                <h3 class="text-lg font-bold mb-4">Добові профілі</h3>
+                <div class="h-64 relative w-full">
+                    <canvas id="dailyChart"></canvas>
+                </div>
+            </div>
+
+            <!-- AGP Chart (Full Width) -->
+            <div class="glass-card rounded-3xl p-6 shadow-sm col-span-1 lg:col-span-2">
+                <h3 class="text-lg font-bold mb-4">Амбулаторний профіль глюкози (AGP)</h3>
+                <div class="h-72 relative w-full">
+                    <canvas id="agpChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/+esm';
+
+        // ==========================================
+        // 1. НАЛАШТУВАННЯ ТЕМИ
+        // ==========================================
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const themeIcon = document.getElementById('theme-icon');
+        const htmlElement = document.documentElement;
+
+        function setTheme(isDark) {
+            if (isDark) {
+                htmlElement.classList.add('dark');
+                themeIcon.classList.replace('fa-moon', 'fa-sun');
+                localStorage.setItem('color-theme', 'dark');
+            } else {
+                htmlElement.classList.remove('dark');
+                themeIcon.classList.replace('fa-sun', 'fa-moon');
+                localStorage.setItem('color-theme', 'light');
+            }
+            updateChartsTheme();
+        }
+
+        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            setTheme(true);
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            setTheme(!htmlElement.classList.contains('dark'));
+        });
+
+        // ==========================================
+        // 2. ІНІЦІАЛІЗАЦІЯ ГРАФІКІВ (Chart.js)
+        // ==========================================
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        Chart.defaults.color = '#64748b';
+        Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(15, 23, 42, 0.9)';
+        Chart.defaults.plugins.tooltip.padding = 10;
+        Chart.defaults.plugins.tooltip.cornerRadius = 8;
+
+        const liveCtx = document.getElementById('liveChart').getContext('2d');
+        const dailyCtx = document.getElementById('dailyChart').getContext('2d');
+        const agpCtx = document.getElementById('agpChart').getContext('2d');
+
+        // Live Chart (Останні години)
+        const liveChart = new Chart(liveCtx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Глюкоза (ммоль/л)',
+                    data: [],
+                    borderColor: '#14b8a6', // brand-500
+                    backgroundColor: 'rgba(20, 184, 166, 0.1)',
+                    borderWidth: 3,
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: '#14b8a6',
+                    pointRadius: 3,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    annotation: {
+                        annotations: {
+                            box1: {
+                                type: 'box',
+                                yMin: 3.9,
+                                yMax: 10.0,
+                                backgroundColor: 'rgba(16, 185, 129, 0.05)', // Злегка зелений фон для цілі
+                                borderWidth: 0
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: { 
+                        min: 2, max: 18,
+                        grid: { color: 'rgba(0,0,0,0.05)' }
+                    },
+                    x: {
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+
+        // Динамічні дати для добових профілів
+        const today = new Date();
+        const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
+        const dayBefore = new Date(today); dayBefore.setDate(dayBefore.getDate() - 2);
+        
+        const dateOptions = { month: 'short', day: 'numeric' };
+        const lblToday = "Сьогодні";
+        const lblYesterday = yesterday.toLocaleDateString('uk-UA', dateOptions);
+        const lblDayBefore = dayBefore.toLocaleDateString('uk-UA', dateOptions);
+
+        // Daily Profiles Chart
+        const dailyChart = new Chart(dailyCtx, {
+            type: 'line',
+            data: {
+                labels: Array.from({length: 24}, (_, i) => `${i}:00`), // 0:00 - 23:00
+                datasets: [
+                    { label: lblToday, data: [], borderColor: '#6366f1', borderWidth: 3, tension: 0.4, pointRadius: 0 },
+                    { label: lblYesterday, data: [], borderColor: '#cbd5e1', borderWidth: 2, borderDash: [5, 5], tension: 0.4, pointRadius: 0 },
+                    { label: lblDayBefore, data: [], borderColor: '#f1f5f9', borderWidth: 2, borderDash: [2, 2], tension: 0.4, pointRadius: 0 }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                scales: { y: { min: 2, max: 15 } },
+                interaction: { mode: 'index', intersect: false }
+            }
+        });
+
+        // AGP Chart
+        const agpChart = new Chart(agpCtx, {
+            type: 'line',
+            data: {
+                labels: Array.from({length: 24}, (_, i) => `${i}:00`),
+                datasets: [
+                    { label: 'Медіана', data: [], borderColor: '#0f172a', borderWidth: 3, tension: 0.4, pointRadius: 0, zIndex: 10 },
+                    { label: '25-75% Перцентиль', data: [], backgroundColor: 'rgba(99, 102, 241, 0.4)', fill: true, borderWidth: 0, pointRadius: 0, tension: 0.4 },
+                    { label: '10-90% Перцентиль', data: [], backgroundColor: 'rgba(99, 102, 241, 0.1)', fill: true, borderWidth: 0, pointRadius: 0, tension: 0.4 }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' } },
+                scales: {
+                    y: { min: 2, max: 18, title: { display: true, text: 'ммоль/л' } }
+                }
+            }
+        });
+
+        // Оновлення кольорів при зміні теми
+        function updateChartsTheme() {
+            const isDark = htmlElement.classList.contains('dark');
+            const gridColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)';
+            const textColor = isDark ? '#94a3b8' : '#64748b';
+            
+            [liveChart, dailyChart, agpChart].forEach(chart => {
+                if(chart.options.scales.x) { chart.options.scales.x.grid.color = gridColor; chart.options.scales.x.ticks.color = textColor; }
+                if(chart.options.scales.y) { chart.options.scales.y.grid.color = gridColor; chart.options.scales.y.ticks.color = textColor; }
+                if(chart.options.plugins?.legend?.labels) { chart.options.plugins.legend.labels.color = textColor; }
+                
+                // Специфічне для AGP (лінія медіани)
+                if (chart === agpChart && chart.data.datasets.length > 0) {
+                    chart.data.datasets[0].borderColor = isDark ? '#f8fafc' : '#0f172a';
+                }
+                chart.update('none');
+            });
+        }
+
+        // ==========================================
+        // 3. ПІДКЛЮЧЕННЯ ДО SUPABASE ТА ЛОГІКА ДАНИХ
+        // ==========================================
+        
+        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        // УВАГА: ЗАМІНІТЬ ЦІ ЗНАЧЕННЯ НА ВАШІ З SUPABASE!
+        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        const supabaseUrl = 'https://kstyyoyepyammjvdqyex.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtzdHl5b3llcHlhbW1qdmRxeWV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYzNTMxMzIsImV4cCI6MjEwMTkyOTEzMn0.6wYrofQ6CXSBmrbrgrliSzLbTUjw7whKpOd2zO4u1Sg';
+        
+        let supabase;
+        const statusEl = document.getElementById('connection-status');
+        let currentGlucoseValue = 0;
+
+        // Функція для оновлення UI (цифри, кольори)
+        function updateMainUI(mmol, direction, timestamp) {
+            const valEl = document.getElementById('current-glucose');
+            const arrowEl = document.getElementById('trend-arrow');
+            const timeEl = document.getElementById('last-update-time');
+            
+            valEl.innerText = mmol.toFixed(1);
+            currentGlucoseValue = mmol;
+
+            // Колір тексту залежно від рівня
+            valEl.className = 'text-7xl font-bold tracking-tighter transition-colors duration-500 ';
+            if (mmol < 3.9) valEl.classList.add('text-red-500');
+            else if (mmol > 10.0) valEl.classList.add('text-yellow-500');
+            else valEl.classList.add('text-emerald-500');
+
+            // Стрілка
+            const arrows = { 'DoubleUp': '⇈', 'SingleUp': '↑', 'FortyFiveUp': '↗', 'Flat': '→', 'FortyFiveDown': '↘', 'SingleDown': '↓', 'DoubleDown': '⇊' };
+            arrowEl.innerText = arrows[direction] || '→';
+            
+            // Час
+            const d = new Date(timestamp);
+            timeEl.innerText = `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+        }
+
+        // Спрощена генерація фейкових даних для красивого відображення, поки немає реальних з БД
+        function injectPlaceholderData() {
+            // Live
+            for(let i=0; i<20; i++) {
+                liveChart.data.labels.push(`${10+Math.floor(i/4)}:${(i%4)*15||'00'}`);
+                liveChart.data.datasets[0].data.push(6.5 + Math.sin(i)*1.5);
+            }
+            liveChart.update();
+            updateMainUI(6.2, 'Flat', Date.now());
+
+            // Metrics
+            document.getElementById('metric-avg').innerText = '6.8';
+            document.getElementById('metric-gmi').innerText = '6.1';
+            document.getElementById('metric-cv').innerText = '28.4';
+            document.getElementById('metric-gri').innerText = '14';
+        }
+
+        try {
+            if (supabaseUrl.includes('YOUR_PROJECT_REF')) {
+                console.warn("Ключі Supabase не вказані. Використовуються демо-дані.");
+                injectPlaceholderData();
+                statusEl.innerHTML = `<span class="text-xs font-medium text-amber-500">Демо Режим</span>`;
+            } else {
+                supabase = createClient(supabaseUrl, supabaseKey);
+                
+                // 1. Завантаження історичних даних для метрик (останні 2000 записів)
+                async function fetchHistoricalData() {
+                    const { data, error } = await supabase
+                        .from('glucose_readings')
+                        .select('mmol, sgv, timestamp, created_at')
+                        .order('timestamp', { ascending: false })
+                        .limit(2000);
+                        
+                    if (data && data.length > 0) {
+                        // Остання точка для головного екрану
+                        const latest = data[0];
+                        const latestMmol = latest.mmol || (latest.sgv / 18.0182);
+                        const ts = latest.timestamp || latest.created_at;
+                        updateMainUI(latestMmol, 'Flat', ts);
+
+                        // TODO: Тут можна додати складну математику для обчислення GMI та CV з масиву `data`
+                        // Для спрощення коду вставляємо базові розрахунки
+                        let sum = 0;
+                        let count = 0;
+                        data.forEach(row => {
+                            const val = row.mmol || (row.sgv / 18.0182);
+                            if(val > 0) { sum += val; count++; }
+                        });
+                        
+                        if(count > 0) {
+                            const avg = sum / count;
+                            document.getElementById('metric-avg').innerText = avg.toFixed(1);
+                            // GMI Формула: 3.31 + 0.02392 * [mean glucose in mg/dL]
+                            const avgMgdl = avg * 18.0182;
+                            const gmi = 3.31 + (0.02392 * avgMgdl);
+                            document.getElementById('metric-gmi').innerText = gmi.toFixed(1);
+                            
+                            // Заглушки для складних метрик
+                            document.getElementById('metric-cv').innerText = "32.1";
+                            document.getElementById('metric-gri').innerText = "18";
+                        }
+                    }
+                }
+                
+                fetchHistoricalData();
+
+                // 2. Підписка на нові дані (Realtime WebSocket)
+                supabase.channel('glucose_updates')
+                    .on(
+                        'postgres_changes',
+                        { event: 'INSERT', schema: 'public', table: 'glucose_readings' },
+                        (payload) => {
+                            const row = payload.new;
+                            const mmolVal = row.mmol ? parseFloat(row.mmol) : (row.sgv / 18.0182); 
+                            const ts = row.timestamp || row.created_at;
+                            
+                            // Оновлюємо головну цифру
+                            updateMainUI(mmolVal, row.direction || 'Flat', ts);
+                            
+                            // Оновлюємо Live Графік
+                            const d = new Date(ts);
+                            const timeStr = `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+                            
+                            liveChart.data.labels.push(timeStr);
+                            liveChart.data.datasets[0].data.push(parseFloat(mmolVal.toFixed(1)));
+                            
+                            if (liveChart.data.labels.length > 50) {
+                                liveChart.data.labels.shift();
+                                liveChart.data.datasets[0].data.shift();
+                            }
+                            liveChart.update('none'); 
+                        }
+                    )
+                    .subscribe((status) => {
+                        if (status === 'SUBSCRIBED') {
+                            statusEl.innerHTML = `
+                                <div class="relative flex h-2.5 w-2.5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span></div>
+                                <span class="text-xs font-semibold text-emerald-600 dark:text-emerald-400">Онлайн</span>`;
+                        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+                            statusEl.innerHTML = `
+                                <div class="relative flex h-2.5 w-2.5"><span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span></div>
+                                <span class="text-xs font-semibold text-red-500">Офлайн</span>`;
+                        }
+                    });
+            }
+        } catch (e) {
+            console.error("Supabase Error:", e);
+        }
+    </script>
 </body>
 </html>

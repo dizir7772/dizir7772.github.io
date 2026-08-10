@@ -271,16 +271,40 @@
             options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 2, max: 15 } }, interaction: { mode: 'index', intersect: false } }
         });
 
-        // AGP Chart
+        // AGP Chart (Оновлено: Процентильні хвилі)
         const agpChart = new Chart(agpCtx, {
             type: 'line',
             data: {
                 labels: Array.from({length: 24}, (_, i) => `${i}:00`),
                 datasets: [
-                    { label: 'Медіана', data: [], borderColor: '#0f172a', borderWidth: 3, tension: 0.4, pointRadius: 2, spanGaps: true, zIndex: 10 }
+                    { id: 'p95', label: '95%', data: [], borderColor: 'transparent', backgroundColor: 'transparent', pointRadius: 0, tension: 0.4, fill: false }, // 0
+                    { id: 'p05', label: '5-95%', data: [], borderColor: 'transparent', backgroundColor: 'rgba(20, 184, 166, 0.1)', pointRadius: 0, tension: 0.4, fill: 0 }, // 1 (заливає до 0)
+                    { id: 'p75', label: '75%', data: [], borderColor: 'transparent', backgroundColor: 'transparent', pointRadius: 0, tension: 0.4, fill: false }, // 2
+                    { id: 'p25', label: '25-75%', data: [], borderColor: 'transparent', backgroundColor: 'rgba(20, 184, 166, 0.3)', pointRadius: 0, tension: 0.4, fill: 2 }, // 3 (заливає до 2)
+                    { id: 'median', label: 'Медіана', data: [], borderColor: '#14b8a6', borderWidth: 3, tension: 0.4, pointRadius: 0, fill: false, zIndex: 10 }, // 4 (центральна)
+                    { label: 'Верхня межа (10.0)', data: Array(24).fill(10), borderColor: 'rgba(234, 179, 8, 0.5)', borderWidth: 1, borderDash: [5, 5], pointRadius: 0, fill: false, tension: 0 }, // 5
+                    { label: 'Нижня межа (3.9)', data: Array(24).fill(3.9), borderColor: 'rgba(239, 68, 68, 0.5)', borderWidth: 1, borderDash: [5, 5], pointRadius: 0, fill: false, tension: 0 } // 6
                 ]
             },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { y: { min: 2, max: 18, title: { display: true, text: 'ммоль/л' } } } }
+            options: { 
+                responsive: true, maintainAspectRatio: false, 
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: {
+                        mode: 'index', intersect: false,
+                        filter: (item) => [1, 3, 4].includes(item.datasetIndex), // Показуємо тільки головні діапазони
+                        callbacks: {
+                            label: function(context) {
+                                if (context.datasetIndex === 4) return `Медіана: ${context.parsed.y.toFixed(1)}`;
+                                if (context.datasetIndex === 3) return `25-75%: ${context.chart.data.datasets[3].data[context.dataIndex]?.toFixed(1)} - ${context.chart.data.datasets[2].data[context.dataIndex]?.toFixed(1)}`;
+                                if (context.datasetIndex === 1) return `5-95%: ${context.chart.data.datasets[1].data[context.dataIndex]?.toFixed(1)} - ${context.chart.data.datasets[0].data[context.dataIndex]?.toFixed(1)}`;
+                                return null;
+                            }
+                        }
+                    }
+                }, 
+                scales: { y: { min: 2, max: 16, title: { display: true, text: 'ммоль/л' } }, x: { ticks: { maxTicksLimit: 8 } } } 
+            }
         });
 
         chartsReady = true;
@@ -295,11 +319,21 @@
                 if(chart.options.scales.x) { chart.options.scales.x.grid.color = gridColor; chart.options.scales.x.ticks.color = textColor; }
                 if(chart.options.scales.y) { chart.options.scales.y.grid.color = gridColor; chart.options.scales.y.ticks.color = textColor; }
                 if(chart.options.plugins?.legend?.labels) { chart.options.plugins.legend.labels.color = textColor; }
-                if (chart === agpChart && chart.data.datasets.length > 0) {
-                    chart.data.datasets[0].borderColor = isDark ? '#f8fafc' : '#0f172a';
-                }
                 chart.update('none');
             });
+        }
+
+        // Допоміжна функція для розрахунку процентилів (хвиль AGP)
+        function getPercentile(arr, p) {
+            if (arr.length === 0) return null;
+            if (arr.length === 1) return arr[0];
+            const sorted = [...arr].sort((a, b) => a - b);
+            const index = (p / 100) * (sorted.length - 1);
+            const lower = Math.floor(index);
+            const upper = Math.ceil(index);
+            const weight = index - lower;
+            if (upper >= sorted.length) return sorted[lower];
+            return sorted[lower] * (1 - weight) + sorted[upper] * weight;
         }
 
         // ==========================================
@@ -332,19 +366,40 @@
 
         async function fetchHistoricalData() {
             try {
-                // Витягуємо останні 5000 записів!
-                const { data, error } = await supabase
-                    .from('glucose_readings')
-                    .select('mmol, sgv, timestamp')
-                    .not('timestamp', 'is', null) // Захист від битих даних
-                    .order('timestamp', { ascending: false })
-                    .limit(5000);
+                let allData = [];
+                let start = 0;
+                const step = 1000;
+                const maxPoints = 15000; // Оптимально для AGP (це кілька тижнів безперервних даних)
+                let hasMore = true;
+
+                statusEl.innerHTML = `<span class="text-slate-500">Синхронізація історії...</span>`;
+
+                // Цикл: завантажуємо по 1000 точок, поки не зберемо всі або не досягнемо ліміту
+                while (hasMore) {
+                    const { data, error } = await supabase
+                        .from('glucose_readings')
+                        .select('mmol, sgv, timestamp')
+                        .not('timestamp', 'is', null)
+                        .order('timestamp', { ascending: false })
+                        .range(start, start + step - 1);
+                        
+                    if (error) {
+                        console.error(error);
+                        break;
+                    }
+
+                    if (data && data.length > 0) {
+                        allData.push(...data);
+                        start += step;
+                    }
                     
-                if (error) {
-                    statusEl.innerHTML = `<span class="text-red-500">Помилка читання БД</span>`;
-                    console.error(error);
-                    return;
+                    // Якщо база віддала менше 1000, значить ми дійшли до кінця таблиці
+                    if (!data || data.length < step || allData.length >= maxPoints) {
+                        hasMore = false;
+                    }
                 }
+
+                const data = allData;
 
                 if (!data || data.length === 0) {
                     statusEl.innerHTML = `<span class="text-amber-500">База даних порожня</span>`;
@@ -425,13 +480,21 @@
                     }
                 });
 
-                // AGP Медіана
-                let medians = hourlyData.map(arr => {
-                    if(arr.length === 0) return null;
-                    arr.sort((a,b) => a-b);
-                    return arr[Math.floor(arr.length / 2)];
+                // AGP Хвилі (Процентилі)
+                let p95 = [], p75 = [], p50 = [], p25 = [], p05 = [];
+                hourlyData.forEach(arr => {
+                    p95.push(getPercentile(arr, 95));
+                    p75.push(getPercentile(arr, 75));
+                    p50.push(getPercentile(arr, 50));
+                    p25.push(getPercentile(arr, 25));
+                    p05.push(getPercentile(arr, 5));
                 });
-                agpChart.data.datasets[0].data = medians;
+
+                agpChart.data.datasets[0].data = p95;
+                agpChart.data.datasets[1].data = p05;
+                agpChart.data.datasets[2].data = p75;
+                agpChart.data.datasets[3].data = p25;
+                agpChart.data.datasets[4].data = p50; // Медіана
                 agpChart.update();
                 
                 // Динамічний Добовий графік (Останні 3 унікальні дні)

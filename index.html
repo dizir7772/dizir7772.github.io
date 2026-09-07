@@ -1,745 +1,755 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html lang="uk" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Glucose Intelligence Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+    <title>dizir7772 | GitHub Profile & Portfolio</title>
     
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
+                    colors: {
+                        brand: {
+                            cyan: '#06b6d4',
+                            purple: '#8b5cf6',
+                            emerald: '#10b981',
+                            pink: '#ec4899',
+                            dark: '#0f172a',
+                            card: 'rgba(30, 41, 59, 0.7)'
+                        }
+                    },
                     fontFamily: {
                         sans: ['Inter', 'sans-serif'],
-                        serif: ['Lora', 'serif'],
-                    },
-                    colors: {
-                        app: {
-                            bg: '#0f1219',
-                            card: '#181d26',
-                            border: '#2a313c',
-                            textMain: '#e2e8f0',
-                            textMuted: '#8b9bb4',
-                            accent: '#facc15',
-                            green: '#2dd4bf',
-                            red: '#f43f5e',
-                            orange: '#fb923c',
-                            yellow: '#fbbf24',
-                            pink: '#ec4899'
-                        }
+                        mono: ['JetBrains Mono', 'monospace']
                     }
                 }
             }
         }
     </script>
-    <style>
-        body { background-color: #0f1219; color: #e2e8f0; font-family: 'Inter', sans-serif; }
-        .card { background-color: #181d26; border: 1px solid #2a313c; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
-        .font-serif { font-family: 'Lora', serif; }
-        
-        .circular-chart { display: block; margin: 0 auto; max-width: 80%; max-height: 250px; }
-        .circle-bg { fill: none; stroke: #2a313c; stroke-width: 2.5; }
-        .circle { fill: none; stroke-width: 2.5; stroke-linecap: round; transition: stroke-dasharray 1s ease-out; }
-        
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #0f1219; }
-        ::-webkit-scrollbar-thumb { background: #2a313c; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #3f495a; }
 
-        .modal-enter { animation: modalFadeIn 0.3s ease-out forwards; }
-        @keyframes modalFadeIn {
-            from { opacity: 0; transform: scale(0.95) translateY(10px); }
-            to { opacity: 1; transform: scale(1) translateY(0); }
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Custom CSS Styles -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #090d16;
+            color: #f1f5f9;
+            overflow-x: hidden;
+        }
+
+        /* Glassmorphism Effect */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+        }
+
+        .glass-card {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            background: rgba(30, 41, 59, 0.7);
+            border-color: rgba(6, 182, 212, 0.4);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 30px -10px rgba(6, 182, 212, 0.25);
+        }
+
+        /* Custom Dynamic Background Glow */
+        .glow-effect {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.25;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Gradient Text */
+        .text-gradient {
+            background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .text-gradient-alt {
+            background: linear-gradient(135deg, #34d399 0%, #38bdf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Typing cursor animation */
+        .cursor-blink {
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #090d16;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #334155;
         }
     </style>
 </head>
-<body class="min-h-screen p-4 md:p-8">
+<body class="relative min-h-screen text-slate-200 selection:bg-cyan-500 selection:text-white">
 
-    <!-- Loading Overlay -->
-    <div id="loading-overlay" class="fixed inset-0 bg-[#0f1219] z-50 flex flex-col items-center justify-center transition-opacity duration-500">
-        <div class="w-12 h-12 border-4 border-app-border border-t-app-green rounded-full animate-spin mb-4"></div>
-        <div id="loading-text" class="text-app-textMuted font-medium">Синхронізація з базою даних...</div>
-    </div>
+    <!-- Interactive Background Canvas -->
+    <canvas id="bg-canvas" class="fixed inset-0 pointer-events-none z-0"></canvas>
 
-    <main class="max-w-7xl mx-auto space-y-6">
-        
-        <!-- Header Controls & Sensor Selector -->
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-app-card p-4 rounded-xl border border-app-border">
+    <!-- Ambient Gradient Glow Orbs -->
+    <div class="glow-effect w-96 h-96 bg-cyan-500 top-10 left-10"></div>
+    <div class="glow-effect w-96 h-96 bg-purple-600 bottom-20 right-10"></div>
+    <div class="glow-effect w-80 h-80 bg-emerald-500 top-1/2 left-1/3"></div>
+
+    <!-- MAIN CONTAINER -->
+    <div class="relative z-10 max-w-5xl mx-auto px-4 py-8 md:py-12 flex flex-col gap-8">
+
+        <!-- HEADER / NAVBAR -->
+        <header class="glass-panel rounded-2xl p-4 flex justify-between items-center transition-all duration-300">
             <div class="flex items-center gap-3">
-                <span class="text-xl">📡</span>
-                <div>
-                    <div class="text-xs text-app-textMuted font-medium uppercase tracking-wider">Аналітика за сенсором</div>
-                    <div class="text-sm font-semibold text-white">Оберіть період / сенсор для аналізу</div>
+                <div class="relative">
+                    <span class="w-3 h-3 bg-emerald-400 rounded-full inline-block animate-ping absolute"></span>
+                    <span class="w-3 h-3 bg-emerald-500 rounded-full inline-block relative"></span>
                 </div>
+                <span class="text-xs md:text-sm font-mono text-emerald-400 font-medium tracking-wide">
+                    STATUS: Відкритий до співпраці
+                </span>
             </div>
-            
-            <div class="w-full sm:w-auto">
-                <select id="sensor-select" class="w-full sm:w-80 bg-[#0f1219] border border-app-border rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-app-green transition-colors cursor-pointer">
-                    <option value="active">Поточний сенсор</option>
-                </select>
-            </div>
-        </div>
 
-        <!-- Top Section -->
-        <div class="card p-6 md:p-8 flex flex-col md:flex-row gap-8 items-center md:items-stretch">
-            <div class="relative w-48 h-48 flex-shrink-0">
-                <svg viewBox="0 0 36 36" class="circular-chart w-full h-full drop-shadow-[0_0_15px_rgba(45,212,191,0.3)]">
-                    <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                    <path id="live-gauge-ring" class="circle stroke-app-green" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                </svg>
-                <div class="absolute inset-0 flex flex-col items-center justify-center mt-2">
-                    <span id="current-glucose" class="text-5xl font-bold text-white tracking-tight">--</span>
-                    <span class="text-xs text-app-textMuted mt-1">ммоль/л</span>
-                    <div class="mt-2 bg-[#2a313c] px-3 py-1 rounded-full text-xs text-white flex items-center gap-1 border border-[#3f495a]">
-                        <span id="current-arrow">→</span> <span id="current-trend-text">стабільно</span>
+            <div class="flex items-center gap-3">
+                <!-- Theme Accent Selector -->
+                <div class="flex gap-1.5 bg-slate-800/80 p-1.5 rounded-xl border border-slate-700/50">
+                    <button onclick="setThemeAccent('cyan')" title="Cyan Accent" class="w-4 h-4 rounded-full bg-cyan-400 hover:scale-125 transition-transform"></button>
+                    <button onclick="setThemeAccent('purple')" title="Purple Accent" class="w-4 h-4 rounded-full bg-purple-400 hover:scale-125 transition-transform"></button>
+                    <button onclick="setThemeAccent('emerald')" title="Emerald Accent" class="w-4 h-4 rounded-full bg-emerald-400 hover:scale-125 transition-transform"></button>
+                </div>
+
+                <!-- Social Action Quick Links -->
+                <a href="mailto:v.a.artemenko1990@gmail.com" title="v.a.artemenko1990@gmail.com"
+                   class="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-rose-400 text-xs md:text-sm font-medium px-3 py-1.5 rounded-xl border border-slate-700 transition-all">
+                    <i class="fa-solid fa-envelope text-base"></i>
+                    <span class="hidden sm:inline">Email</span>
+                </a>
+
+                <a href="https://t.me/dizir7772" target="_blank" rel="noopener noreferrer" title="Telegram"
+                   class="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-sky-400 text-xs md:text-sm font-medium px-3 py-1.5 rounded-xl border border-slate-700 transition-all">
+                    <i class="fa-brands fa-telegram text-base"></i>
+                    <span class="hidden sm:inline">Telegram</span>
+                </a>
+
+                <a href="https://www.linkedin.com/in/dizir7772" target="_blank" rel="noopener noreferrer" title="LinkedIn"
+                   class="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-blue-400 text-xs md:text-sm font-medium px-3 py-1.5 rounded-xl border border-slate-700 transition-all">
+                    <i class="fa-brands fa-linkedin text-base"></i>
+                    <span class="hidden sm:inline">LinkedIn</span>
+                </a>
+
+                <!-- GitHub Profile Direct Link -->
+                <a href="https://github.com/dizir7772" target="_blank" rel="noopener noreferrer" 
+                   class="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs md:text-sm font-medium px-3.5 py-1.5 rounded-xl border border-slate-700 transition-all">
+                    <i class="fa-brands fa-github text-base"></i>
+                    <span class="hidden sm:inline">GitHub</span>
+                </a>
+            </div>
+        </header>
+
+        <!-- HERO PROFILE CARD -->
+        <section class="glass-panel rounded-3xl p-6 sm:p-10 relative overflow-hidden">
+            <div class="flex flex-col md:flex-row items-center gap-8 z-10 relative">
+                
+                <!-- Profile Avatar Frame -->
+                <div class="relative group">
+                    <div class="absolute -inset-1 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-full blur opacity-75 group-hover:opacity-100 transition duration-500 group-hover:scale-105"></div>
+                    <div class="relative w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-2 border-slate-700 bg-slate-900 flex items-center justify-center">
+                        <img id="user-avatar" src="https://github.com/dizir7772.png" 
+                             alt="dizir7772" 
+                             onerror="this.onerror=null; this.src='https://placehold.co/160x160/1e293b/06b6d4?text=dizir7772'"
+                             class="w-full h-full object-cover">
                     </div>
                 </div>
-                <div id="last-update-text" class="absolute -bottom-6 left-0 right-0 text-center text-[10px] text-app-textMuted">Останнє вимірювання: --</div>
+
+                <!-- Bio & Description -->
+                <div class="text-center md:text-left flex-1 space-y-3">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/60 border border-cyan-800/50 text-cyan-400 text-xs font-mono">
+                        <i class="fa-solid fa-code"></i> 1С / BAS Developer
+                    </div>
+
+                    <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight">
+                        Привіт, я <span class="text-gradient">dizir7772</span>
+                    </h1>
+
+                    <!-- Dynamic Typing Text -->
+                    <p class="text-lg md:text-xl text-slate-300 font-mono h-8 flex items-center justify-center md:justify-start">
+                        <span id="typing-text"></span><span class="cursor-blink text-cyan-400">|</span>
+                    </p>
+
+                    <p class="text-slate-400 text-sm md:text-base leading-relaxed max-w-2xl">
+                        Розробник 1С / BAS із досвідом роботи з конфігурацією <strong>УНФ (BAS Малий бізнес)</strong>, створення складних запитів, звітів на <strong>СКД</strong> та розробки <strong>HTTP/REST API</strong> сервісів. Модернізація конфігурацій через розширення, керовані форми та інтеграції із зовнішніми системами.
+                    </p>
+
+                    <!-- Action Buttons -->
+                    <div class="flex flex-wrap gap-3 pt-2 justify-center md:justify-start">
+                        <a href="mailto:v.a.artemenko1990@gmail.com" 
+                           class="flex items-center gap-2 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-400 hover:to-pink-500 text-white font-semibold px-5 py-2.5 rounded-xl shadow-lg shadow-rose-500/20 transition-all hover:scale-105 active:scale-95">
+                            <i class="fa-solid fa-envelope text-lg"></i>
+                            Email
+                        </a>
+
+                        <a href="https://t.me/dizir7772" target="_blank" rel="noopener noreferrer" 
+                           class="flex items-center gap-2 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-semibold px-5 py-2.5 rounded-xl shadow-lg shadow-sky-500/20 transition-all hover:scale-105 active:scale-95">
+                            <i class="fa-brands fa-telegram text-lg"></i>
+                            Telegram
+                        </a>
+
+                        <a href="https://www.linkedin.com/in/dizir7772" target="_blank" rel="noopener noreferrer" 
+                           class="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-500 hover:to-indigo-600 text-white font-semibold px-5 py-2.5 rounded-xl shadow-lg shadow-blue-500/20 transition-all hover:scale-105 active:scale-95">
+                            <i class="fa-brands fa-linkedin text-lg"></i>
+                            LinkedIn
+                        </a>
+
+                        <button onclick="copyToClipboard('https://github.com/dizir7772')" 
+                                class="flex items-center gap-2 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-slate-200 font-medium px-4 py-2.5 rounded-xl transition-all hover:scale-105 active:scale-95">
+                            <i class="fa-regular fa-copy text-cyan-400"></i>
+                            Скопіювати GitHub
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- QUICK STATS GRID -->
+        <section class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="glass-card rounded-2xl p-4 text-center space-y-1">
+                <i class="fa-solid fa-briefcase text-2xl text-cyan-400 mb-1"></i>
+                <div class="text-xl sm:text-2xl font-extrabold text-white font-mono">УНФ / BAS</div>
+                <div class="text-xs text-slate-400 uppercase tracking-wider">Основні системи</div>
             </div>
 
-            <div class="flex-grow flex flex-col justify-between py-2 w-full">
-                <div>
-                    <h1 class="text-2xl md:text-3xl font-serif text-app-green font-medium mb-3" id="main-status-title">У цільовому діапазоні</h1>
-                    <p id="summary-text" class="text-app-textMuted text-sm leading-relaxed max-w-3xl">
-                        Аналіз даних обраного сенсора...
-                    </p>
+            <div class="glass-card rounded-2xl p-4 text-center space-y-1">
+                <i class="fa-solid fa-chart-pie text-2xl text-purple-400 mb-1"></i>
+                <div class="text-xl sm:text-2xl font-extrabold text-white font-mono">СКД & Запити</div>
+                <div class="text-xs text-slate-400 uppercase tracking-wider">Складний аналіз</div>
+            </div>
+
+            <div class="glass-card rounded-2xl p-4 text-center space-y-1">
+                <i class="fa-solid fa-plug text-2xl text-amber-400 mb-1"></i>
+                <div class="text-xl sm:text-2xl font-extrabold text-white font-mono">HTTP & API</div>
+                <div class="text-xs text-slate-400 uppercase tracking-wider">Інтеграційні сервіси</div>
+            </div>
+
+            <div class="glass-card rounded-2xl p-4 text-center space-y-1">
+                <i class="fa-solid fa-code-branch text-2xl text-emerald-400 mb-1"></i>
+                <div class="text-xl sm:text-2xl font-extrabold text-white font-mono">Сховище & Git</div>
+                <div class="text-xs text-slate-400 uppercase tracking-wider">Командна розробка</div>
+            </div>
+        </section>
+
+        <!-- INTERACTIVE TERMINAL WIDGET -->
+        <section class="glass-panel rounded-3xl p-5 md:p-6 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-700/60 pb-3">
+                <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-red-500/80 inline-block"></span>
+                    <span class="w-3 h-3 rounded-full bg-yellow-500/80 inline-block"></span>
+                    <span class="w-3 h-3 rounded-full bg-green-500/80 inline-block"></span>
+                    <span class="ml-2 font-mono text-xs text-slate-400 flex items-center gap-1">
+                        <i class="fa-solid fa-terminal text-slate-500"></i> dizir7772-interactive-shell
+                    </span>
                 </div>
+                <span class="text-xs font-mono text-slate-500">Bash v5.2</span>
+            </div>
+
+            <div id="terminal-output" class="font-mono text-xs md:text-sm space-y-2 max-h-52 overflow-y-auto pr-2 text-slate-300">
+                <p class="text-slate-400">Ласкаво просимо! Введіть <span class="text-cyan-400 font-bold">help</span> для списку команд.</p>
+            </div>
+
+            <form id="terminal-form" onsubmit="handleTerminalCommand(event)" class="flex items-center gap-2 font-mono text-xs md:text-sm pt-2 border-t border-slate-800">
+                <span class="text-emerald-400">dizir7772@github:~$</span>
+                <input type="text" id="terminal-input" autocomplete="off" placeholder="Введіть команду..." 
+                       class="flex-1 bg-transparent border-none outline-none text-white focus:ring-0 placeholder-slate-600">
+            </form>
+        </section>
+
+        <!-- TECH STACK & COMPETENCIES SHOWCASE -->
+        <section class="space-y-4">
+            <h2 class="text-xl md:text-2xl font-bold flex items-center gap-2 text-white">
+                <i class="fa-solid fa-layer-group text-cyan-400"></i>
+                Навички та Ключові Компетенції
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 
-                <div class="mt-8">
-                    <div class="flex justify-between items-end mb-2">
-                        <div class="text-[10px] uppercase tracking-widest text-app-textMuted font-semibold">Останні 3 години</div>
-                        <div id="status-badge" class="text-[10px] text-app-green flex items-center gap-1">
-                            <span class="w-2 h-2 rounded-full bg-app-green animate-pulse"></span> Онлайн
+                <!-- Category 1: 1С / BAS Конфігурації -->
+                <div class="glass-card rounded-2xl p-5 space-y-3">
+                    <div class="flex items-center gap-3 border-b border-slate-800 pb-2">
+                        <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-lg">
+                            <i class="fa-solid fa-cubes"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-white">Конфігурації & Об'єкти</h3>
+                            <p class="text-xs text-slate-400">УНФ, BAS, Керовані форми</p>
                         </div>
                     </div>
-                    <div class="h-16 w-full relative bg-[#0f1219] rounded overflow-hidden">
-                        <canvas id="miniSparklineChart"></canvas>
+                    <ul class="text-xs text-slate-300 space-y-2 list-disc list-inside leading-relaxed">
+                        <li>Робота з конфігурацією <strong>УНФ</strong> (Управління Невеликою Фірмою)</li>
+                        <li>Досвід з <strong>BAS: ERP, Малий бізнес</strong></li>
+                        <li>Розробка <strong>керованих форм</strong> та інтерфейсів</li>
+                        <li>Створення нових об'єктів (довідники, документи, регістри, константи)</li>
+                    </ul>
+                </div>
+
+                <!-- Category 2: Запити та СКД -->
+                <div class="glass-card rounded-2xl p-5 space-y-3">
+                    <div class="flex items-center gap-3 border-b border-slate-800 pb-2">
+                        <div class="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-lg">
+                            <i class="fa-solid fa-chart-line"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-white">Запити & Звіти СКД</h3>
+                            <p class="text-xs text-slate-400">Складний аналіз даних</p>
+                        </div>
+                    </div>
+                    <ul class="text-xs text-slate-300 space-y-2 list-disc list-inside leading-relaxed">
+                        <li>Вміння працювати зі <strong>складними запитами 1С</strong></li>
+                        <li>Створення складних звітів на <strong>СКД</strong> та налаштування СКД</li>
+                        <li>Впевнена робота з <strong>Консоллю запитів</strong></li>
+                        <li>Оптимізація та аналіз вибірок даних</li>
+                    </ul>
+                </div>
+
+                <!-- Category 3: Модернізація та Розширення -->
+                <div class="glass-card rounded-2xl p-5 space-y-3">
+                    <div class="flex items-center gap-3 border-b border-slate-800 pb-2">
+                        <div class="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 text-lg">
+                            <i class="fa-solid fa-puzzle-piece"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-white">Модернізація & Код</h3>
+                            <p class="text-xs text-slate-400">Розширення та Рефакторинг</p>
+                        </div>
+                    </div>
+                    <ul class="text-xs text-slate-300 space-y-2 list-disc list-inside leading-relaxed">
+                        <li>Робота з <strong>розширеннями конфігурації</strong> (Extensions)</li>
+                        <li>Зовнішні звіти та обробки (.epf / .erf)</li>
+                        <li>Пошук та виправлення помилок у коді (Debugging)</li>
+                        <li>Вміння швидко <strong>розбиратися в чужому коді</strong></li>
+                    </ul>
+                </div>
+
+                <!-- Category 4: Інтеграції та API -->
+                <div class="glass-card rounded-2xl p-5 space-y-3">
+                    <div class="flex items-center gap-3 border-b border-slate-800 pb-2">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-lg">
+                            <i class="fa-solid fa-network-wired"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-white">API & Інтеграції</h3>
+                            <p class="text-xs text-slate-400">HTTP-сервіси, Сайти, Mobile</p>
+                        </div>
+                    </div>
+                    <ul class="text-xs text-slate-300 space-y-2 list-disc list-inside leading-relaxed">
+                        <li>API-інтеграції через <strong>REST & JSON</strong></li>
+                        <li>Створення <strong>HTTP-сервісів у 1С</strong> для обміну даними</li>
+                        <li>Взаємодія сайтів напряму з 1С через веб-сервіси</li>
+                        <li>Інтеграція мобільних додатків з базою 1С</li>
+                    </ul>
+                </div>
+
+                <!-- Category 5: Інструменти та Командна робота -->
+                <div class="glass-card rounded-2xl p-5 space-y-3">
+                    <div class="flex items-center gap-3 border-b border-slate-800 pb-2">
+                        <div class="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 text-lg">
+                            <i class="fa-solid fa-users-gear"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-white">Інструменти & Команда</h3>
+                            <p class="text-xs text-slate-400">Сховище, Git, Web</p>
+                        </div>
+                    </div>
+                    <ul class="text-xs text-slate-300 space-y-2 list-disc list-inside leading-relaxed">
+                        <li>Командна розробка через <strong>Сховище конфігурації</strong></li>
+                        <li>Робота з <strong>Git</strong> & Google Docs</li>
+                        <li>Високий рівень самостійності та відповідальності</li>
+                        <li>Базові знання <strong>Python, HTML5, CSS3</strong></li>
+                    </ul>
+                </div>
+
+                <!-- Category 6: Мови та Комунікація -->
+                <div class="glass-card rounded-2xl p-5 space-y-3">
+                    <div class="flex items-center gap-3 border-b border-slate-800 pb-2">
+                        <div class="w-10 h-10 rounded-xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400 text-lg">
+                            <i class="fa-solid fa-language"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-white">Знання Мов</h3>
+                            <p class="text-xs text-slate-400">Мовна компетенція</p>
+                        </div>
+                    </div>
+                    <div class="space-y-3 pt-1">
+                        <div>
+                            <div class="flex justify-between text-xs font-mono text-slate-300 mb-1">
+                                <span>Українська</span>
+                                <span class="text-emerald-400">Вільно</span>
+                            </div>
+                            <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                                <div class="bg-emerald-400 h-full w-full"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs font-mono text-slate-300 mb-1">
+                                <span>Англійська</span>
+                                <span class="text-cyan-400">Середній (B1)</span>
+                            </div>
+                            <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                                <div class="bg-cyan-400 h-full w-2/3"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- Metrics Row -->
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div class="card p-5">
-                <div class="text-xs text-app-textMuted mb-3">Середній рівень глюкози</div>
-                <div class="flex items-baseline gap-1">
-                    <span id="card-avg" class="text-3xl font-bold text-white">--</span>
-                    <span class="text-xs text-app-textMuted">ммоль/л</span>
-                </div>
-                <div class="text-[10px] text-app-green mt-2 flex items-center gap-1">
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> ціль <8.5
-                </div>
             </div>
-            <div class="card p-5">
-                <div class="text-xs text-app-textMuted mb-3">GMI (індикатор керування)</div>
-                <div class="flex items-baseline gap-1">
-                    <span id="card-gmi" class="text-3xl font-bold text-white">--</span>
-                    <span class="text-xs text-app-textMuted">%</span>
-                </div>
-                <div class="text-[10px] text-app-green mt-2 flex items-center gap-1">
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> ціль <7%
-                </div>
-            </div>
-            <div class="card p-5">
-                <div class="text-xs text-app-textMuted mb-3">Варіабельність (CV)</div>
-                <div class="flex items-baseline gap-1">
-                    <span id="card-cv" class="text-3xl font-bold text-white">--</span>
-                    <span class="text-xs text-app-textMuted">%</span>
-                </div>
-                <div id="cv-status" class="text-[10px] mt-2 flex items-center gap-1 text-app-green">
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> ціль ≤36%
-                </div>
-            </div>
-            <div class="card p-5">
-                <div class="text-xs text-app-textMuted mb-3">Час у цільовому діапазоні</div>
-                <div class="flex items-baseline gap-1">
-                    <span id="card-tir" class="text-3xl font-bold text-white">--</span>
-                    <span class="text-xs text-app-textMuted">%</span>
-                </div>
-                <div id="tir-status" class="text-[10px] mt-2 flex items-center gap-1 text-app-green">
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> ціль >70%
-                </div>
-            </div>
-            <div class="card p-5 col-span-2 md:col-span-1">
-                <div class="text-xs text-app-textMuted mb-3">GRI (індекс ризику)</div>
-                <div class="flex items-baseline gap-1">
-                    <span id="card-gri" class="text-3xl font-bold text-white">--</span>
-                    <span class="text-xs text-app-textMuted">/100</span>
-                </div>
-                <div id="gri-status" class="text-[10px] mt-2 text-app-textMuted">
-                    Оцінка ризику...
-                </div>
-            </div>
-        </div>
+        </section>
 
-        <!-- TIR Bar Row -->
-        <div class="card p-6 md:p-8">
-            <div class="flex justify-between items-end mb-6">
-                <h2 class="text-xl font-serif font-medium text-white">Час у діапазонах</h2>
-                <span id="tir-period-label" class="text-[10px] text-app-textMuted uppercase tracking-wider">для вибраного сенсора</span>
+        <!-- FOOTER -->
+        <footer class="glass-panel rounded-2xl p-6 text-center md:flex md:justify-between md:items-center space-y-4 md:space-y-0">
+            <div class="text-xs text-slate-400">
+                &copy; <span id="current-year"></span> <strong class="text-slate-200">dizir7772</strong>. BAS / 1C Developer.
             </div>
-            
-            <div class="w-full h-10 flex rounded-lg overflow-hidden mb-5 bg-[#0f1219]">
-                <div id="bar-vlow" class="bg-app-pink h-full transition-all duration-1000 flex items-center justify-center text-[10px] font-bold text-white overflow-hidden" style="width: 0%"></div>
-                <div id="bar-low" class="bg-app-red h-full transition-all duration-1000 flex items-center justify-center text-[10px] font-bold text-white overflow-hidden" style="width: 0%"></div>
-                <div id="bar-target" class="bg-app-green h-full transition-all duration-1000 flex items-center justify-center text-[10px] font-bold text-[#0f1219] overflow-hidden" style="width: 0%"></div>
-                <div id="bar-high" class="bg-app-yellow h-full transition-all duration-1000 flex items-center justify-center text-[10px] font-bold text-[#0f1219] overflow-hidden" style="width: 0%"></div>
-                <div id="bar-vhigh" class="bg-app-orange h-full transition-all duration-1000 flex items-center justify-center text-[10px] font-bold text-white overflow-hidden" style="width: 0%"></div>
-            </div>
-            
-            <div class="flex flex-wrap justify-between text-xs text-app-textMuted gap-2">
-                <div class="flex items-center gap-1.5"><div class="w-2.5 h-2.5 rounded-full bg-app-pink"></div> Дуже низький (<3.0): <strong id="lbl-vlow" class="text-white ml-1">0%</strong></div>
-                <div class="flex items-center gap-1.5"><div class="w-2.5 h-2.5 rounded-full bg-app-red"></div> Низький (3.0-3.9): <strong id="lbl-low" class="text-white ml-1">0%</strong></div>
-                <div class="flex items-center gap-1.5"><div class="w-2.5 h-2.5 rounded-full bg-app-green"></div> Ціль (3.9-10.0): <strong id="lbl-target" class="text-white ml-1">0%</strong></div>
-                <div class="flex items-center gap-1.5"><div class="w-2.5 h-2.5 rounded-full bg-app-yellow"></div> Високий (10.0-13.9): <strong id="lbl-high" class="text-white ml-1">0%</strong></div>
-                <div class="flex items-center gap-1.5"><div class="w-2.5 h-2.5 rounded-full bg-app-orange"></div> Дуже високий (>13.9): <strong id="lbl-vhigh" class="text-white ml-1">0%</strong></div>
-            </div>
-        </div>
 
-        <!-- AGP Chart -->
-        <div class="card p-6 md:p-8">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-serif font-medium text-white flex items-center gap-2">
-                    Амбулаторний профіль глюкози (AGP)
-                    <span class="text-app-textMuted cursor-help" title="Відображає медіану та відхилення за добовим часом у межах вибраного сенсора">ⓘ</span>
-                </h2>
-                <div class="flex items-center gap-4">
-                    <span class="text-[10px] text-app-textMuted uppercase tracking-wider hidden sm:block">медіана, 25-75% та 5-95% перцентилі</span>
-                </div>
+            <!-- Social Links -->
+            <div class="flex justify-center items-center gap-5 text-xl">
+                <a href="mailto:v.a.artemenko1990@gmail.com" title="Email: v.a.artemenko1990@gmail.com" class="text-slate-400 hover:text-rose-400 transition-colors">
+                    <i class="fa-solid fa-envelope"></i>
+                </a>
+                <a href="https://t.me/dizir7772" target="_blank" rel="noopener noreferrer" title="Telegram: t.me/dizir7772" class="text-slate-400 hover:text-sky-400 transition-colors">
+                    <i class="fa-brands fa-telegram"></i>
+                </a>
+                <a href="https://www.linkedin.com/in/dizir7772" target="_blank" rel="noopener noreferrer" title="LinkedIn: linkedin.com/in/dizir7772" class="text-slate-400 hover:text-blue-400 transition-colors">
+                    <i class="fa-brands fa-linkedin"></i>
+                </a>
+                <a href="https://github.com/dizir7772" target="_blank" rel="noopener noreferrer" title="GitHub Profile" class="text-slate-400 hover:text-cyan-400 transition-colors">
+                    <i class="fa-brands fa-github"></i>
+                </a>
             </div>
-            <div class="h-80 w-full relative">
-                <canvas id="agpChart"></canvas>
-            </div>
-        </div>
+        </footer>
 
-        <!-- Daily Profiles Grid (Останні 3 дні) -->
-        <div class="card p-6 md:p-8">
-            <div class="flex justify-between items-end mb-6">
-                <h2 class="text-xl font-serif font-medium text-white">Добові профілі</h2>
-                <span id="daily-count-label" class="text-[10px] text-app-textMuted uppercase tracking-wider">Останні 3 дні · клікніть на день для деталей</span>
-            </div>
-            
-            <div id="daily-grid" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <!-- Точно 3 картки для останніх днів -->
-            </div>
-        </div>
-    </main>
+    </div>
 
-    <!-- Day Detail Modal -->
-    <div id="day-modal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4">
-        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm modal-bg-close"></div>
-        
-        <div class="card bg-app-card w-full max-w-4xl relative z-10 modal-enter border border-app-border shadow-2xl flex flex-col max-h-[90vh]">
-            <div class="p-6 border-b border-app-border flex justify-between items-start">
+    <!-- CONTACT MODAL -->
+    <div id="contact-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300">
+        <div class="glass-panel w-full max-w-md rounded-3xl p-6 relative transform scale-95 transition-all duration-300" id="modal-content">
+            <button onclick="closeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <h3 class="text-xl font-bold text-white mb-1 flex items-center gap-2">
+                <i class="fa-regular fa-paper-plane text-cyan-400"></i> Надіслати повідомлення
+            </h3>
+            <p class="text-xs text-slate-400 mb-4">Напишіть мені прямо зараз або знайдіть мене на GitHub!</p>
+
+            <form onsubmit="handleContactSubmit(event)" class="space-y-3">
                 <div>
-                    <h3 id="modal-date-title" class="text-2xl font-serif font-medium text-white mb-1">Пн, 20.07.2026</h3>
-                    <p id="modal-readings-count" class="text-xs text-app-textMuted">480 вимірів за цей день</p>
-                </div>
-                <button class="modal-bg-close w-8 h-8 rounded-full bg-[#2a313c] hover:bg-[#3f495a] text-white flex items-center justify-center transition-colors">
-                    ✕
-                </button>
-            </div>
-            
-            <div class="p-6 overflow-y-auto">
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                    <div class="bg-[#0f1219] rounded-xl p-4 border border-[#2a313c]">
-                        <div class="text-[10px] text-app-textMuted uppercase tracking-wider mb-1">Середнє</div>
-                        <div id="modal-stat-avg" class="text-2xl font-bold text-white">--</div>
-                    </div>
-                    <div class="bg-[#0f1219] rounded-xl p-4 border border-[#2a313c]">
-                        <div class="text-[10px] text-app-textMuted uppercase tracking-wider mb-1">Мінімум</div>
-                        <div id="modal-stat-min" class="text-2xl font-bold text-app-red">--</div>
-                    </div>
-                    <div class="bg-[#0f1219] rounded-xl p-4 border border-[#2a313c]">
-                        <div class="text-[10px] text-app-textMuted uppercase tracking-wider mb-1">Максимум</div>
-                        <div id="modal-stat-max" class="text-2xl font-bold text-app-orange">--</div>
-                    </div>
-                    <div class="bg-[#0f1219] rounded-xl p-4 border border-[#2a313c]">
-                        <div class="text-[10px] text-app-textMuted uppercase tracking-wider mb-1">У цільовому діапазоні</div>
-                        <div id="modal-stat-tir" class="text-2xl font-bold text-app-green">--%</div>
-                    </div>
+                    <label class="block text-xs font-mono text-slate-300 mb-1">Ваше ім'я</label>
+                    <input type="text" required placeholder="Олександр" class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-cyan-400">
                 </div>
 
-                <div class="h-[400px] w-full relative bg-[#0f1219] rounded-xl border border-[#2a313c] overflow-hidden">
-                    <canvas id="modalDetailedChart" class="relative z-10"></canvas>
+                <div>
+                    <label class="block text-xs font-mono text-slate-300 mb-1">Email / Контакт</label>
+                    <input type="text" required placeholder="alex@example.com" class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-cyan-400">
                 </div>
-            </div>
+
+                <div>
+                    <label class="block text-xs font-mono text-slate-300 mb-1">Повідомлення</label>
+                    <textarea rows="3" required placeholder="Привіт! Хотів обговорити проект..." class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-cyan-400 resize-none"></textarea>
+                </div>
+
+                <button type="submit" class="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold py-2.5 rounded-xl transition-all shadow-lg shadow-cyan-500/20">
+                    Надіслати
+                </button>
+            </form>
         </div>
     </div>
 
-    <script type="module">
-        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/+esm';
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <div class="bg-slate-800 border border-cyan-500/50 text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3">
+            <i class="fa-solid fa-circle-check text-cyan-400 text-lg"></i>
+            <span id="toast-message" class="text-xs font-mono">Скопійовано у буфер обміну!</span>
+        </div>
+    </div>
 
-        const supabaseUrl = 'https://kstyyoyepyammjvdqyex.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtzdHl5b3llcHlhbW1qdmRxeWV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYzNTMxMzIsImV4cCI6MjEwMTkyOTEzMn0.6wYrofQ6CXSBmrbrgrliSzLbTUjw7whKpOd2zO4u1Sg';
-        const supabase = createClient(supabaseUrl, supabaseKey);
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // Current Year setup
+        document.getElementById('current-year').textContent = new Date().getFullYear();
 
-        Chart.defaults.font.family = "'Inter', sans-serif";
-        Chart.defaults.color = '#8b9bb4';
-        Chart.defaults.scale.grid.color = 'rgba(42, 49, 60, 0.5)';
+        // Dynamic Typing Titles for 1C/BAS Developer
+        const titles = ["1С / BAS Developer", "УНФ & BAS ERP Specialist", "СКД & Запити 1С", "HTTP Services & REST API"];
+        let titleIdx = 0;
+        let charIdx = 0;
+        let isDeleting = false;
+        const typingSpeed = 100;
+        const typingTextElement = document.getElementById('typing-text');
 
-        let miniSparkline, agpChart, modalChart;
-        let globalAllData = [];
-        let globalSensors = [];
-        let globalDailyData = new Map();
-
-        const targetBackgroundPlugin = {
-            id: 'targetBackground',
-            beforeDraw: (chart) => {
-                if (chart.config.options.plugins.targetBackground?.enabled) {
-                    const ctx = chart.ctx;
-                    const yAxis = chart.scales.y;
-                    const xAxis = chart.scales.x;
-                    
-                    const topY = yAxis.getPixelForValue(10);
-                    const bottomY = yAxis.getPixelForValue(3.9);
-                    
-                    ctx.save();
-                    ctx.fillStyle = 'rgba(45, 212, 191, 0.05)';
-                    ctx.fillRect(xAxis.left, topY, xAxis.width, bottomY - topY);
-
-                    ctx.fillStyle = 'rgba(244, 63, 94, 0.05)';
-                    ctx.fillRect(xAxis.left, bottomY, xAxis.width, Math.max(0, yAxis.bottom - bottomY));
-
-                    ctx.lineWidth = 1;
-                    ctx.beginPath();
-                    ctx.strokeStyle = 'rgba(250, 204, 21, 0.4)';
-                    ctx.setLineDash([4, 4]);
-                    ctx.moveTo(xAxis.left, topY);
-                    ctx.lineTo(xAxis.right, topY);
-                    ctx.stroke();
-
-                    ctx.beginPath();
-                    ctx.strokeStyle = 'rgba(244, 63, 94, 0.4)';
-                    ctx.moveTo(xAxis.left, bottomY);
-                    ctx.lineTo(xAxis.right, bottomY);
-                    ctx.stroke();
-                    
-                    ctx.restore();
-                }
+        function typeEffect() {
+            const currentTitle = titles[titleIdx];
+            if (isDeleting) {
+                typingTextElement.textContent = currentTitle.substring(0, charIdx - 1);
+                charIdx--;
+            } else {
+                typingTextElement.textContent = currentTitle.substring(0, charIdx + 1);
+                charIdx++;
             }
-        };
-        Chart.register(targetBackgroundPlugin);
 
-        function initCharts() {
-            const ctxMini = document.getElementById('miniSparklineChart').getContext('2d');
-            miniSparkline = new Chart(ctxMini, {
-                type: 'line',
-                data: { labels: [], datasets: [{ data: [], borderColor: '#facc15', borderWidth: 2, pointRadius: 0, tension: 0.4, spanGaps: true }] },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: false }, tooltip: { enabled: false }, targetBackground: { enabled: true } },
-                    scales: { x: { display: false }, y: { display: false, min: 2, max: 15 } },
-                    layout: { padding: 0 }
-                }
-            });
+            let delta = typingSpeed;
+            if (isDeleting) delta /= 2;
 
-            const ctxAGP = document.getElementById('agpChart').getContext('2d');
-            agpChart = new Chart(ctxAGP, {
-                type: 'line',
-                data: {
-                    labels: Array.from({length: 24}, (_, i) => `${i.toString().padStart(2, '0')}:00`),
-                    datasets: [
-                        { id: 'p95', data: [], borderColor: 'transparent', backgroundColor: 'transparent', pointRadius: 0, fill: false, tension: 0.4, spanGaps: true },
-                        { id: 'p05', data: [], borderColor: 'transparent', backgroundColor: 'rgba(45, 212, 191, 0.05)', pointRadius: 0, fill: 0, tension: 0.4, spanGaps: true },
-                        { id: 'p75', data: [], borderColor: 'transparent', backgroundColor: 'transparent', pointRadius: 0, fill: false, tension: 0.4, spanGaps: true },
-                        { id: 'p25', data: [], borderColor: 'transparent', backgroundColor: 'rgba(45, 212, 191, 0.15)', pointRadius: 0, fill: 2, tension: 0.4, spanGaps: true },
-                        { id: 'median', data: [], borderColor: '#facc15', borderWidth: 3, pointRadius: 0, fill: false, tension: 0.4, zIndex: 10, spanGaps: true },
-                        { data: Array(24).fill(10), borderColor: 'rgba(250, 204, 21, 0.3)', borderWidth: 1, borderDash: [5, 5], pointRadius: 0, fill: false, tension: 0 },
-                        { data: Array(24).fill(3.9), borderColor: 'rgba(250, 204, 21, 0.3)', borderWidth: 1, borderDash: [5, 5], pointRadius: 0, fill: false, tension: 0 }
-                    ]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { 
-                        legend: { display: false },
-                        tooltip: {
-                            mode: 'index', intersect: false, backgroundColor: 'rgba(15, 18, 25, 0.9)', titleColor: '#e2e8f0', bodyColor: '#e2e8f0', borderColor: '#2a313c', borderWidth: 1,
-                            filter: (item) => [1, 3, 4].includes(item.datasetIndex),
-                            callbacks: {
-                                label: function(ctx) {
-                                    if (ctx.datasetIndex === 4) return `Медіана: ${ctx.parsed.y?.toFixed(1)}`;
-                                    if (ctx.datasetIndex === 3) return `25-75%: ${ctx.chart.data.datasets[3].data[ctx.dataIndex]?.toFixed(1)} - ${ctx.chart.data.datasets[2].data[ctx.dataIndex]?.toFixed(1)}`;
-                                    if (ctx.datasetIndex === 1) return `5-95%: ${ctx.chart.data.datasets[1].data[ctx.dataIndex]?.toFixed(1)} - ${ctx.chart.data.datasets[0].data[ctx.dataIndex]?.toFixed(1)}`;
-                                    return null;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: { min: 2, max: 15, border: {display: false} },
-                        x: { border: {display: false}, grid: { display: false }, ticks: { maxTicksLimit: 8 } }
-                    }
-                }
-            });
+            if (!isDeleting && charIdx === currentTitle.length) {
+                delta = 1800; // Pause at end of word
+                isDeleting = true;
+            } else if (isDeleting && charIdx === 0) {
+                isDeleting = false;
+                titleIdx = (titleIdx + 1) % titles.length;
+                delta = 400;
+            }
 
-            const ctxModal = document.getElementById('modalDetailedChart').getContext('2d');
-            modalChart = new Chart(ctxModal, {
-                type: 'line',
-                data: { labels: [], datasets: [{ data: [], borderColor: '#facc15', borderWidth: 2, pointRadius: 3, pointBackgroundColor: [], tension: 0.2, spanGaps: true }] },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: false }, targetBackground: { enabled: true } },
-                    scales: { y: { min: 2, max: 15, border: {display: false} }, x: { border: {display: false}, ticks: { maxTicksLimit: 8 } } },
-                    layout: { padding: 0 }
-                }
-            });
+            setTimeout(typeEffect, delta);
         }
 
-        // Автоматичне виявлення сенсорів (по паузах > 4 год або тривалості > 15.5 днів)
-        function groupReadingsBySensors(validData) {
-            const sortedChrono = [...validData].sort((a,b) => a.date - b.date);
-            const sensors = [];
-            let current = null;
-
-            const GAP_LIMIT_MS = 4 * 60 * 60 * 1000; // 4 години
-            const SENSOR_MAX_SPAN_MS = 15.5 * 24 * 60 * 60 * 1000; // 15.5 днів
-
-            sortedChrono.forEach(reading => {
-                if (!current) {
-                    current = { id: 1, startDate: reading.date, endDate: reading.date, readings: [reading] };
-                } else {
-                    const timeGap = reading.date - current.endDate;
-                    const duration = reading.date - current.startDate;
-
-                    if (timeGap > GAP_LIMIT_MS || duration > SENSOR_MAX_SPAN_MS) {
-                        sensors.push(current);
-                        current = { id: sensors.length + 1, startDate: reading.date, endDate: reading.date, readings: [reading] };
-                    } else {
-                        current.readings.push(reading);
-                        current.endDate = reading.date;
-                    }
-                }
-            });
-            if (current) sensors.push(current);
-
-            // Повертаємо сенсори від найновішого до найстарішого
-            return sensors.reverse();
-        }
-
-        function getPercentile(arr, p) {
-            if (!arr || arr.length === 0) return null;
-            const sorted = [...arr].sort((a, b) => a - b);
-            const index = (p / 100) * (sorted.length - 1);
-            const lower = Math.floor(index);
-            const upper = Math.ceil(index);
-            const weight = index - lower;
-            if (upper >= sorted.length) return sorted[lower];
-            return sorted[lower] * (1 - weight) + sorted[upper] * weight;
-        }
-
-        function generateSVGSparkline(values) {
-            if (!values || values.length === 0) return '';
-            const minV = 3.0, maxV = 13.0, range = maxV - minV;
-            const w = 100, h = 40;
-            
-            let pathD = "";
-            values.forEach((v, i) => {
-                const x = (i / (values.length - 1)) * w;
-                let clampedV = Math.min(Math.max(v, minV), maxV); 
-                const y = h - ((clampedV - minV) / range) * h;
-                pathD += (i === 0 ? `M ${x} ${y} ` : `L ${x} ${y} `);
-            });
-
-            return `
-                <svg viewBox="0 0 100 40" class="w-full h-full overflow-visible" preserveAspectRatio="none">
-                    <line x1="0" y1="20" x2="100" y2="20" stroke="#2dd4bf" stroke-width="0.5" stroke-dasharray="2,2" opacity="0.5"/>
-                    <path d="${pathD}" fill="none" stroke="#facc15" stroke-width="1.5" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/>
-                </svg>`;
-        }
-
-        const modal = document.getElementById('day-modal');
-        document.querySelectorAll('.modal-bg-close').forEach(el => el.addEventListener('click', () => {
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }));
-
-        window.openDayDetails = function(dateStr) {
-            const data = globalDailyData.get(dateStr);
-            if(!data) return;
-
-            const dObj = new Date(dateStr);
-            const options = { weekday: 'short', year: 'numeric', month: '2-digit', day: '2-digit' };
-            document.getElementById('modal-date-title').innerText = dObj.toLocaleDateString('uk-UA', options).replace(',', '');
-            document.getElementById('modal-readings-count').innerText = `${data.raw.length} вимірів за цей день`;
-
-            let sum = 0, inRange = 0;
-            let minVal = 999, maxVal = 0;
-            
-            data.raw.forEach(v => {
-                sum += v.val;
-                if(v.val < minVal) minVal = v.val;
-                if(v.val > maxVal) maxVal = v.val;
-                if(v.val >= 3.9 && v.val <= 10.0) inRange++;
-            });
-            
-            const avg = sum / data.raw.length;
-            const tir = Math.round((inRange / data.raw.length) * 100);
-
-            document.getElementById('modal-stat-avg').innerText = avg.toFixed(1);
-            document.getElementById('modal-stat-min').innerText = minVal.toFixed(1);
-            document.getElementById('modal-stat-max').innerText = maxVal.toFixed(1);
-            document.getElementById('modal-stat-tir').innerText = `${tir}%`;
-
-            document.getElementById('modal-stat-tir').className = `text-2xl font-bold ${tir >= 70 ? 'text-app-green' : 'text-app-orange'}`;
-            document.getElementById('modal-stat-min').className = `text-2xl font-bold ${minVal < 3.9 ? 'text-app-red' : 'text-white'}`;
-            document.getElementById('modal-stat-max').className = `text-2xl font-bold ${maxVal > 10.0 ? 'text-app-orange' : 'text-white'}`;
-
-            const labels = data.raw.map(d => `${d.date.getHours().toString().padStart(2,'0')}:${d.date.getMinutes().toString().padStart(2,'0')}`);
-            const values = data.raw.map(d => d.val);
-            
-            const pointColors = values.map(v => (v === minVal || v === maxVal) ? '#f43f5e' : 'transparent');
-            const pointRadii = values.map(v => (v === minVal || v === maxVal) ? 5 : 0);
-
-            modalChart.data.labels = labels;
-            modalChart.data.datasets[0].data = values;
-            modalChart.data.datasets[0].pointBackgroundColor = pointColors;
-            modalChart.data.datasets[0].pointRadius = pointRadii;
-            modalChart.update();
-
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
+        window.onload = function() {
+            typeEffect();
+            initCanvas();
         };
 
-        function renderDashboardForDataset(sensorReadings, isAllHistory = false) {
-            if (!sensorReadings || sensorReadings.length === 0) return;
+        // Interactive Canvas Animation
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        let mouse = { x: null, y: null, radius: 120 };
 
-            // Сортуємо від найновішого до найстарішого
-            const validData = [...sensorReadings].sort((a, b) => b.date - a.date);
-            const last = globalAllData[0]; // Найостанніше свіже вимірювання взагалі
-
-            // 1. ГОЛОВНИЙ ІНДИКАТОР В РЕАЛЬНОМУ ЧАСІ
-            const gaugeRing = document.getElementById('live-gauge-ring');
-            document.getElementById('current-glucose').innerText = last.val.toFixed(1);
+        function initCanvas() {
+            resizeCanvas();
+            particles = [];
+            const particleCount = Math.floor((canvas.width * canvas.height) / 15000);
             
-            let ringColor = '#2dd4bf'; let trendText = 'стабільно';
-            if(last.val < 3.9) { ringColor = '#f43f5e'; trendText = 'низько'; }
-            else if(last.val > 10.0) { ringColor = '#facc15'; trendText = 'високо'; }
-            gaugeRing.style.stroke = ringColor;
-            
-            const arrows = { 'DoubleUp':'⇈', 'SingleUp':'↑', 'FortyFiveUp':'↗', 'Flat':'→', 'FortyFiveDown':'↘', 'SingleDown':'↓', 'DoubleDown':'⇊' };
-            document.getElementById('current-arrow').innerText = arrows[last.dir] || '→';
-            document.getElementById('current-trend-text').innerText = trendText;
-            
-            document.getElementById('last-update-text').innerText = `Останнє вимірювання: ${last.date.toLocaleDateString('uk-UA', {day:'2-digit', month:'2-digit'})}, ${last.date.toLocaleTimeString('uk-UA', {hour:'2-digit', minute:'2-digit'})}`;
-
-            // 2. ОБЧИСЛЕННЯ МЕТРИК ДЛЯ ОБРАНОГО СЕНСОРА
-            const firstDate = validData[validData.length - 1].date;
-            const lastDate = validData[0].date;
-            const diffTime = Math.abs(lastDate - firstDate);
-            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
-
-            let sum = 0, vl = 0, l = 0, t = 0, h = 0, vh = 0;
-            validData.forEach(d => {
-                sum += d.val;
-                if(d.val < 3.0) vl++; else if(d.val <= 3.8) l++; else if(d.val <= 10.0) t++; else if(d.val <= 13.9) h++; else vh++;
-            });
-            
-            const avg = sum / validData.length;
-            const tirPct = (t / validData.length) * 100;
-            const gmi = 3.31 + (0.02392 * (avg * 18.0182));
-            
-            let varianceSum = 0;
-            validData.forEach(d => varianceSum += Math.pow(d.val - avg, 2));
-            const cv = (Math.sqrt(varianceSum / validData.length) / avg) * 100;
-
-            const pVL = (vl / validData.length) * 100;
-            const pL = (l / validData.length) * 100;
-            const pH = (h / validData.length) * 100;
-            const pVH = (vh / validData.length) * 100;
-            const gri = (3.0 * pVL) + (2.4 * pL) + (1.6 * pVH) + (0.8 * pH);
-
-            document.getElementById('summary-text').innerHTML = `Показники за <strong>${diffDays} днів</strong> роботи сенсора (з ${firstDate.toLocaleDateString('uk-UA', {day:'2-digit', month:'2-digit'})} по ${lastDate.toLocaleDateString('uk-UA', {day:'2-digit', month:'2-digit'})}): середній рівень <strong>${avg.toFixed(1)} ммоль/л</strong>, ${tirPct.toFixed(0)}% часу в цільовому діапазоні.`;
-
-            gaugeRing.style.strokeDasharray = `${Math.min(Math.max(tirPct, 0), 100)}, 100`;
-
-            document.getElementById('card-avg').innerText = avg.toFixed(1);
-            document.getElementById('card-gmi').innerText = gmi.toFixed(1);
-            document.getElementById('card-cv').innerText = cv.toFixed(1);
-            document.getElementById('card-tir').innerText = tirPct.toFixed(1);
-            document.getElementById('card-gri').innerText = gri.toFixed(1);
-
-            document.getElementById('cv-status').className = cv > 36 ? "text-[10px] mt-2 flex items-center gap-1 text-app-red" : "text-[10px] mt-2 flex items-center gap-1 text-app-green";
-            document.getElementById('tir-status').className = tirPct < 70 ? "text-[10px] mt-2 flex items-center gap-1 text-app-orange" : "text-[10px] mt-2 flex items-center gap-1 text-app-green";
-            
-            let griText = "Оцінка..."; let griColor = "";
-            if(gri <= 36) { griText = "Низький ризик"; griColor = "text-app-green"; }
-            else if(gri <= 52) { griText = "Помірний ризик"; griColor = "text-app-yellow"; }
-            else { griText = "Високий ризик"; griColor = "text-app-red"; }
-            document.getElementById('gri-status').innerHTML = `<span class="${griColor}">${griText}</span>`;
-
-            // 3. TIR BAR
-            const setBar = (id, pct) => {
-                const bar = document.getElementById(`bar-${id}`);
-                bar.style.width = `${pct}%`;
-                bar.innerText = pct > 4 ? `${Math.round(pct)}%` : ''; 
-                document.getElementById(`lbl-${id}`).innerText = `${pct.toFixed(1)}%`;
-            };
-            setBar('vlow', pVL); setBar('low', pL); setBar('target', tirPct); setBar('high', pH); setBar('vhigh', pVH);
-
-            // 4. ОСТАННІ 3 ГОДИНИ (Спарклайн)
-            const threeHoursAgo = last.date.getTime() - (3 * 60 * 60 * 1000);
-            const recentData = globalAllData.filter(d => d.date.getTime() >= threeHoursAgo).reverse();
-            
-            miniSparkline.data.labels = recentData.map(d => d.date.getTime());
-            miniSparkline.data.datasets[0].data = recentData.map(d => d.val);
-            miniSparkline.update();
-
-            // 5. AGP ДЛЯ ОБРАНОГО СЕНСОРА
-            let hourlyData = Array.from({length: 24}, () => []);
-            globalDailyData.clear();
-
-            validData.slice().reverse().forEach(d => {
-                let hour = d.date.getHours();
-                hourlyData[hour].push(d.val); 
-                
-                const dateStr = `${d.date.getFullYear()}-${String(d.date.getMonth()+1).padStart(2,'0')}-${String(d.date.getDate()).padStart(2,'0')}`;
-                if (!globalDailyData.has(dateStr)) globalDailyData.set(dateStr, { raw: [] });
-                globalDailyData.get(dateStr).raw.push(d);
-            });
-
-            let p95=[], p75=[], p50=[], p25=[], p05=[];
-            hourlyData.forEach(arr => {
-                p95.push(getPercentile(arr, 95)); p75.push(getPercentile(arr, 75)); p50.push(getPercentile(arr, 50));
-                p25.push(getPercentile(arr, 25)); p05.push(getPercentile(arr, 5));
-            });
-            agpChart.data.datasets[0].data = p95; agpChart.data.datasets[1].data = p05; agpChart.data.datasets[2].data = p75;
-            agpChart.data.datasets[3].data = p25; agpChart.data.datasets[4].data = p50;
-            agpChart.update();
-
-            // 6. ДОБОВІ ПРОФІЛІ (ВІДОБРАЖАЄМО ЛИШЕ ОСТАННІ 3 ДНІ)
-            const gridContainer = document.getElementById('daily-grid');
-            gridContainer.innerHTML = '';
-            
-            const sortedDates = Array.from(globalDailyData.keys()).sort((a,b) => new Date(b) - new Date(a));
-            
-            // Взяття тільки ТРЬОХ останніх днів
-            const last3Days = sortedDates.slice(0, 3);
-            const daysOfWeek = ['Нд', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
-
-            last3Days.forEach(dateStr => {
-                const dayData = globalDailyData.get(dateStr);
-                const step = Math.ceil(dayData.raw.length / 50);
-                const sparkData = dayData.raw.filter((_, i) => i % step === 0).map(d => d.val);
-                
-                let daySum = 0, dayTgt = 0;
-                dayData.raw.forEach(v => { daySum += v.val; if(v.val>=3.9 && v.val<=10) dayTgt++; });
-                const dayAvg = (daySum / dayData.raw.length).toFixed(1);
-                const dayTir = Math.round((dayTgt / dayData.raw.length) * 100);
-                
-                const dObj = new Date(dateStr);
-                const dayName = daysOfWeek[dObj.getDay()];
-                const dayDate = `${String(dObj.getDate()).padStart(2,'0')}.${String(dObj.getMonth()+1).padStart(2,'0')}`;
-
-                let badgeColor = dayTir >= 70 ? 'bg-app-green/20 text-app-green' : (dayTir >= 50 ? 'bg-app-yellow/20 text-app-yellow' : 'bg-app-red/20 text-app-red');
-                const svgHtml = generateSVGSparkline(sparkData);
-
-                const cardHtml = `
-                    <div class="bg-[#0f1219] rounded-xl p-4 border border-[#2a313c] hover:border-app-accent cursor-pointer transition-all group flex flex-col h-32" onclick="openDayDetails('${dateStr}')">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-serif font-bold text-white text-base group-hover:text-app-accent transition-colors">${dayName}</span>
-                            <span class="text-xs text-app-textMuted">${dayDate}</span>
-                        </div>
-                        <div class="flex-grow relative w-full overflow-hidden my-1">
-                            ${svgHtml}
-                        </div>
-                        <div class="flex justify-between items-center mt-2">
-                            <span class="font-bold text-white text-lg">${dayAvg} <span class="text-xs text-app-textMuted font-normal">ммоль/л</span></span>
-                            <span class="text-xs font-bold px-2 py-0.5 rounded ${badgeColor}">${dayTir}% TIR</span>
-                        </div>
-                    </div>
-                `;
-                gridContainer.innerHTML += cardHtml;
-            });
+            for (let i = 0; i < particleCount; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    vx: (Math.random() - 0.5) * 0.6,
+                    vy: (Math.random() - 0.5) * 0.6,
+                    radius: Math.random() * 2 + 1,
+                    alpha: Math.random() * 0.5 + 0.2
+                });
+            }
+            animateCanvas();
         }
 
-        async function fetchHistoricalData() {
-            try {
-                let allData = [];
-                let start = 0;
-                const step = 1000;
-                let hasMore = true;
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
 
-                while (hasMore) {
-                    const { data, error } = await supabase
-                        .from('glucose_readings')
-                        .select('mmol, sgv, timestamp, direction')
-                        .not('timestamp', 'is', null)
-                        .order('timestamp', { ascending: false })
-                        .range(start, start + step - 1);
-                        
-                    if (error) break;
-                    if (data && data.length > 0) { allData.push(...data); start += step; }
-                    if (!data || data.length < step || allData.length >= 30000) hasMore = false;
-                }
+        window.addEventListener('resize', resizeCanvas);
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.x;
+            mouse.y = e.y;
+        });
 
-                document.getElementById('loading-overlay').classList.add('opacity-0', 'pointer-events-none');
-                setTimeout(() => document.getElementById('loading-overlay').classList.add('hidden'), 500);
+        function animateCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-                if (allData.length === 0) return;
-                document.getElementById('status-badge').innerHTML = `<span class="w-2 h-2 rounded-full bg-app-green animate-pulse"></span> Онлайн (${allData.length} точок)`;
+            for (let i = 0; i < particles.length; i++) {
+                let p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
 
-                globalAllData = allData.map(d => ({
-                    val: d.mmol ? parseFloat(d.mmol) : (d.sgv / 18.0182),
-                    date: new Date(d.timestamp),
-                    dir: d.direction || 'Flat'
-                })).filter(d => !isNaN(d.date.getTime()) && d.val > 0);
+                if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+                if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
 
-                if(globalAllData.length === 0) return;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(56, 189, 248, ${p.alpha})`;
+                ctx.fill();
 
-                // Групуємо вимірювання за сенсорами
-                globalSensors = groupReadingsBySensors(globalAllData);
+                // Draw connections
+                for (let j = i + 1; j < particles.length; j++) {
+                    let p2 = particles[j];
+                    let dx = p.x - p2.x;
+                    let dy = p.y - p2.y;
+                    let dist = Math.sqrt(dx * dx + dy * dy);
 
-                // Заповнюємо списки селектора
-                const selectEl = document.getElementById('sensor-select');
-                selectEl.innerHTML = '';
-
-                globalSensors.forEach((s, idx) => {
-                    const isCurrent = idx === 0;
-                    const daysSpan = Math.floor(Math.abs(s.endDate - s.startDate) / (1000 * 60 * 60 * 24)) + 1;
-                    const dateStr = `${s.startDate.toLocaleDateString('uk-UA', {day:'2-digit', month:'2-digit'})} - ${s.endDate.toLocaleDateString('uk-UA', {day:'2-digit', month:'2-digit'})}`;
-                    
-                    const label = isCurrent 
-                        ? `🟢 Поточний сенсор (${daysSpan} дн: ${dateStr})` 
-                        : `📡 Сенсор #${globalSensors.length - idx} (${daysSpan} дн: ${dateStr})`;
-
-                    selectEl.innerHTML += `<option value="sensor_${idx}">${label}</option>`;
-                });
-
-                selectEl.innerHTML += `<option value="all">🌐 Усі сенсори (Вся історія: ${globalAllData.length} вимірів)</option>`;
-
-                // Початковий рендер для активного сенсора (перший елемент)
-                renderDashboardForDataset(globalSensors[0].readings);
-
-                // Слухач подій на зміну вибору
-                selectEl.addEventListener('change', (e) => {
-                    const val = e.target.value;
-                    if (val === 'all') {
-                        renderDashboardForDataset(globalAllData, true);
-                    } else {
-                        const sIdx = parseInt(val.replace('sensor_', ''));
-                        renderDashboardForDataset(globalSensors[sIdx].readings);
+                    if (dist < 100) {
+                        ctx.beginPath();
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.strokeStyle = `rgba(56, 189, 248, ${0.15 * (1 - dist / 100)})`;
+                        ctx.lineWidth = 0.6;
+                        ctx.stroke();
                     }
-                });
+                }
+            }
 
-            } catch (err) {
-                console.error("Помилка завантаження даних:", err);
+            requestAnimationFrame(animateCanvas);
+        }
+
+        // Interactive Shell Logic
+        function handleTerminalCommand(e) {
+            e.preventDefault();
+            const input = document.getElementById('terminal-input');
+            const output = document.getElementById('terminal-output');
+            const cmd = input.value.trim().toLowerCase();
+
+            if (!cmd) return;
+
+            // Display entered command
+            const userLine = document.createElement('div');
+            userLine.className = 'flex items-center gap-2 text-cyan-400';
+            userLine.innerHTML = `<span class="text-emerald-400">dizir7772@github:~$</span> ${escapeHTML(cmd)}`;
+            output.appendChild(userLine);
+
+            // Process response
+            const resLine = document.createElement('div');
+            resLine.className = 'text-slate-300 ml-2 mb-2';
+
+            switch(cmd) {
+                case 'help':
+                    resLine.innerHTML = `Доступні команди:<br>
+                    • <span class="text-amber-400">about</span> - про розробника<br>
+                    • <span class="text-amber-400">skills</span> - компетенції та технології<br>
+                    • <span class="text-amber-400">languages</span> - рівні знання мов<br>
+                    • <span class="text-amber-400">contact</span> - мої контакти (Telegram & LinkedIn)<br>
+                    • <span class="text-amber-400">clear</span> - очистити екран`;
+                    break;
+
+                case 'about':
+                    resLine.textContent = "dizir7772 — 1С/BAS розробник. Спеціалізація: УНФ, BAS ERP, розробка складних звітів на СКД, розширення конфігурацій, HTTP/REST API інтеграції та командна розробка через Сховище.";
+                    break;
+
+                case 'skills':
+                    resLine.textContent = "Стек: УНФ, BAS ERP/Малий бізнес, СКД, Консоль запитів, Керовані форми, Розширення, HTTP-сервіси, REST API, JSON, Сховище, Git, Python, HTML/CSS.";
+                    break;
+
+                case 'languages':
+                    resLine.textContent = "Українська — Вільно | Англійська — Середній (B1).";
+                    break;
+
+                case 'contact':
+                    resLine.innerHTML = 'Email: <a href="mailto:v.a.artemenko1990@gmail.com" class="text-rose-400 underline">v.a.artemenko1990@gmail.com</a><br>Telegram: <a href="https://t.me/dizir7772" target="_blank" class="text-cyan-400 underline">t.me/dizir7772</a><br>LinkedIn: <a href="https://www.linkedin.com/in/dizir7772" target="_blank" class="text-cyan-400 underline">linkedin.com/in/dizir7772</a>';
+                    break;
+
+                case 'clear':
+                    output.innerHTML = '';
+                    input.value = '';
+                    return;
+
+                default:
+                    resLine.innerHTML = `<span class="text-red-400">Команду '${escapeHTML(cmd)}' не знайдено.</span> Введіть <span class="text-cyan-400 font-bold">help</span> для списку.`;
+            }
+
+            output.appendChild(resLine);
+            input.value = '';
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+            );
+        }
+
+        // Toast Notification Helper
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-message');
+            toastMsg.textContent = message;
+
+            toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+            }, 3000);
+        }
+
+        // Copy to clipboard
+        function copyToClipboard(text) {
+            const tempInput = document.createElement('input');
+            tempInput.value = text;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+
+            showToast('Посилання скопійовано!');
+        }
+
+        // Modal Controls
+        function openModal() {
+            const modal = document.getElementById('contact-modal');
+            const content = document.getElementById('modal-content');
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            content.classList.remove('scale-95');
+            content.classList.add('scale-100');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('contact-modal');
+            const content = document.getElementById('modal-content');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            content.classList.remove('scale-100');
+            content.classList.add('scale-95');
+        }
+
+        function handleContactSubmit(e) {
+            e.preventDefault();
+            closeModal();
+            showToast('Повідомлення надіслано успішно!');
+            e.target.reset();
+        }
+
+        // Theme Accent Switcher
+        function setThemeAccent(theme) {
+            const glow1 = document.querySelector('.glow-effect');
+            if (theme === 'cyan') {
+                glow1.style.backgroundColor = '#06b6d4';
+                showToast('Тему змінено на Неоновий Синій');
+            } else if (theme === 'purple') {
+                glow1.style.backgroundColor = '#a855f7';
+                showToast('Тему змінено на Фіолетовий');
+            } else if (theme === 'emerald') {
+                glow1.style.backgroundColor = '#10b981';
+                showToast('Тему змінено на Смарагдовий');
             }
         }
-
-        initCharts();
-        fetchHistoricalData();
-
-        // Realtime оновлення
-        supabase.channel('glucose_updates')
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'glucose_readings' }, () => {
-                fetchHistoricalData(); 
-            }).subscribe();
-
     </script>
 </body>
 </html>
